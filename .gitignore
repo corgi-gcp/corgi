@@ -1,0 +1,13 @@
+# ZIP archives (extracted folder is included instead)
+*.zip
+
+# Word temporary files
+~$*
+
+# Temp files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
