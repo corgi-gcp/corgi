@@ -11,7 +11,7 @@ This skill generates the **Business Plan** document for SEIC.
 
 The business plan is the most comprehensive document in the filing. It describes why the captive is being formed, how it will operate, its financial projections, risk management approach, and governance structure. Utah uses it to evaluate the viability and legitimacy of the captive.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Entity & Background
 - All entity fields from Document 1 (legal name, type, domicile, etc.)
@@ -72,9 +72,9 @@ The business plan follows this outline (matching the existing template):
 
 ## Generation Logic
 
-1. Read all relevant fields from CSV.
+1. Read all relevant fields from `data.json`.
 2. Load template from `8. Business Plan.docx`.
-3. Populate each section with CSV data and narrative text.
+3. Populate each section with JSON data and narrative text.
 4. Build financial projection tables with proper formatting.
 5. Cross-reference coverage details with Document 6, capitalization with Document 4.
 6. Flag sections where actuarial input is still pending (`[PENDING: Actuarial input required]`).

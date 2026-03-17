@@ -11,7 +11,7 @@ This skill generates the **Captive Formation & Capitalization Details** document
 
 Documents how the captive will be formed and funded — share structure, initial capital contribution, surplus, letters of credit, and the capitalization timeline. Utah uses this to assess solvency and financial readiness.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Formation Details
 - `entity_type` — Corporation, LLC, etc.
@@ -50,7 +50,7 @@ Documents how the captive will be formed and funded — share structure, initial
 
 ## Generation Logic
 
-1. Read formation and capitalization fields from CSV.
+1. Read formation and capitalization fields from `data.json`.
 2. Load template from `4. Captive Formation & Capitalization.docx`.
 3. Populate all sections; compute totals using formulas where possible.
 4. Flag missing fields with `[MISSING: field_name]`.

@@ -11,7 +11,7 @@ This skill generates the **Bylaws** corporate governance document for SEIC.
 
 Bylaws are the internal governance rules of the corporation. They define how the board operates, how officers are elected, meeting procedures, quorum requirements, committees, fiscal year, and amendment processes. Utah DOI reviews bylaws to ensure proper governance.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Board of Directors
 - `board_size` — Number of directors (or range)
@@ -57,7 +57,7 @@ Bylaws are the internal governance rules of the corporation. They define how the
 
 ## Generation Logic
 
-1. Read governance fields from CSV.
+1. Read governance fields from `data.json`.
 2. Load template from `13. CG - Bylaws.docx`.
 3. Populate each article section.
 4. Ensure consistency with Articles of Incorporation (Document 12) on board size, share structure.

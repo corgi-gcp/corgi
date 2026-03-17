@@ -11,7 +11,7 @@ This skill generates the **Membership Agreement** document for SEIC.
 
 The Membership Agreement governs the relationship between SEIC (the captive) and each insured member of the association. It defines eligibility, the application process, premium obligations, coverage participation, governance rights, withdrawal terms, and indemnification. This is a key document for association captives because it establishes the insured-to-insurer relationship.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Program Identity
 - `program_name` — Name of the insurance program
@@ -75,9 +75,9 @@ The Membership Agreement governs the relationship between SEIC (the captive) and
 
 ## Generation Logic
 
-1. Read membership agreement fields from CSV.
+1. Read membership agreement fields from `data.json`.
 2. Load template from `Membership Agreement.docx`.
-3. Populate each article with data from the CSV.
+3. Populate each article with data from `data.json`.
 4. Cross-reference coverage lines with Document 6.
 5. Note that rate tables are prepared separately and referenced as an exhibit.
 6. Flag sections needing adjustment pending final feasibility study.

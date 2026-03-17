@@ -11,7 +11,7 @@ This skill generates the **Investment Policy** corporate governance document for
 
 Sets the investment guidelines for the captive's assets — permitted asset classes, allocation limits, quality standards, custodian arrangements, and compliance with Utah Insurance Code §31A-18-110 and §31A-18-111.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Policy Parameters
 - `investment_objective` — Primary objective (capital preservation, liquidity, income)
@@ -54,7 +54,7 @@ For each permitted class:
 
 ## Generation Logic
 
-1. Read investment policy fields from CSV.
+1. Read investment policy fields from `data.json`.
 2. Load template from `11. CG - Investment Policy.docx`.
 3. Populate permitted investment sections with allocation limits.
 4. Ensure all statutory references to Utah code are accurate.

@@ -11,7 +11,7 @@ This skill generates the **Articles of Incorporation** corporate governance docu
 
 The Articles of Incorporation are the founding charter filed with the Utah Division of Corporations. They define the captive's name, purpose, share structure, registered agent, initial directors, and incorporator. Utah DOI reviews these as part of the captive application.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 - `legal_name` — Full corporate name
 - `purpose_clause` — Corporate purpose (to operate as an association captive insurance company under Utah Title 31A, Chapter 37)
@@ -42,7 +42,7 @@ The Articles of Incorporation are the founding charter filed with the Utah Divis
 
 ## Generation Logic
 
-1. Read corporate formation fields from CSV.
+1. Read corporate formation fields from `data.json`.
 2. Load template from `12. CG - Articles of Incorporation.docx`.
 3. Populate each article with the corresponding data.
 4. Ensure the purpose clause specifically references Utah Title 31A, Chapter 37.

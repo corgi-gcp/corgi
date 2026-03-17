@@ -11,7 +11,7 @@ This skill generates the **Operating Agreement** corporate governance document f
 
 The Operating Agreement governs the relationship between the unitholders and the management of the LLC entity in SEIC's corporate structure. It covers capital contributions, unit classes, profit/loss allocation, distributions, transfer restrictions, governance, and dissolution. Utah DOI reviews this as part of assessing the captive's organizational soundness.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 ### Entity & Parties
 - `llc_name` — Name of the LLC governed by this agreement
@@ -68,7 +68,7 @@ The Operating Agreement governs the relationship between the unitholders and the
 
 ## Generation Logic
 
-1. Read operating agreement fields from CSV.
+1. Read operating agreement fields from `data.json`.
 2. Load template from `15. CG - Operating Agreement.docx`.
 3. Populate each article and build the members/capital schedule exhibit.
 4. Ensure capital contribution amounts are consistent with Document 4.

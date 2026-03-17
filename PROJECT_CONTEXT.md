@@ -4,7 +4,7 @@
 
 This project automates the preparation and filing of regulatory documents required to operate **Sports and Entertainment Insurance Company, Inc. (SEIC)** as an association captive insurance company domiciled in Utah, under the Utah Insurance Code (Title 31A).
 
-The tool reads a master CSV data file containing all entity, officer, service-provider, financial, and coverage details, then populates each required filing document automatically. A verification/editing interface lets preparers review and tweak each document before final compilation into the submission package.
+The tool reads a master JSON data file (`data.json`) containing all entity, officer, service-provider, financial, and coverage details, then populates each required filing document automatically. A verification/editing interface lets preparers review and tweak each document before final compilation into the submission package.
 
 ## Entity Overview
 
@@ -23,17 +23,17 @@ The tool reads a master CSV data file containing all entity, officer, service-pr
 
 - **Runtime:** Node.js / TypeScript
 - **Document generation:** docx templating library (e.g. `docx` or `docxtemplater`)
-- **Data source:** CSV file parsed at runtime (one canonical data file drives all documents)
+- **Data source:** `data.json` — a single canonical JSON file that drives all documents
 - **Verification UI:** TBD (CLI or lightweight web interface for per-document review)
 
 ## Architecture (High Level)
 
 ```
-CSV Data File
+data.json
      │
      ▼
 ┌────────────┐
-│  Parser     │  Reads CSV, normalizes into typed data model
+│  Parser     │  Reads JSON, normalizes into typed data model
 └────┬───────┘
      │
      ▼
@@ -83,25 +83,35 @@ The master tracker lists the following required documents. Each has a dedicated 
 - 19.x: Policy Forms (9 lines — templates to be uploaded separately)
 - Membership Rate Tables
 
-## CSV Data Model
+## JSON Data Model
 
-The canonical CSV file is the single source of truth. It should contain sections/columns covering:
+The canonical `data.json` file is the single source of truth. It is structured as a typed JSON object with top-level sections corresponding to each area of the filing:
 
-- **Entity info:** legal name, type, domicile, addresses, statutory agent, parent chain, ownership percentages
-- **Contact:** application contact name, title, phone, email
-- **Officers & Directors:** for each person — name, title, roles, address, biographical details
-- **Service providers:** captive manager, legal counsel, auditor, actuary, investment advisor, bank — with names, addresses, contact info, roles
-- **Formation & capitalization:** formation date, initial capital, share structure, par value, surplus, LOC details
-- **Lines of coverage:** for each line — name, form type, limit, SIR/deductible, gross premium, reinsurance details, claims basis
-- **Financial projections:** 5-year premium, loss, expense, and surplus projections
-- **Investment policy parameters:** asset classes, allocation targets, limits, custodian
-- **Governance fields:** fiscal year, meeting frequency, quorum rules, officer terms, indemnification scope
+```json
+{
+  "entity": { ... },               // Legal name, type, domicile, addresses, contact, statutory agent
+  "ownership": { ... },            // Parent chain, ultimate owner, ownership percentages
+  "association": { ... },          // Association name, description, member count, eligibility
+  "naic_codes": [ ... ],           // NAIC line-of-business codes
+  "directors_officers": [ ... ],   // Array of person objects
+  "service_providers": { ... },    // Keyed by category: captiveManager, legalCounsel, etc.
+  "formation": { ... },            // Entity type, formation date, fiscal year end
+  "capitalization": { ... },       // Shares, paid-in capital, surplus, LOC, total
+  "lines_of_coverage": [ ... ],    // Array of coverage line objects (9 lines)
+  "financial_projections": [ ... ],// 5-year projection rows
+  "investment_policy": { ... },    // Asset classes, custodian, prohibited investments
+  "governance": { ... },           // Board size, meeting rules, quorum, officer terms
+  "membership_agreement": { ... }  // Eligibility, premium terms, withdrawal, indemnification
+}
+```
+
+See `data.json` in the project root for the fully populated data file.
 
 ## How Skills Work Together
 
-1. User places/updates the CSV data file in the workspace.
+1. User places/updates `data.json` in the workspace root.
 2. User invokes a per-document skill (e.g. "fill in the Articles of Incorporation").
-3. The skill reads the CSV, maps fields to the document template, generates/updates the .docx.
+3. The skill reads `data.json`, maps fields to the document template, generates/updates the .docx.
 4. User reviews the output, makes edits, re-runs if needed.
 5. After all documents pass review, the compiler skill packages the submission.
 

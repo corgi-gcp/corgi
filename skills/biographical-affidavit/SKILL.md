@@ -11,7 +11,7 @@ This skill generates **Biographical Affidavit** documents for each director and 
 
 Utah requires a biographical affidavit (typically the NAIC Uniform Biographical Affidavit form) for every director, manager, and officer of the captive. Officers who filed an affidavit in a prior submission may be exempt from re-filing.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 For each individual requiring an affidavit:
 
@@ -50,7 +50,7 @@ Each affidavit follows the NAIC Uniform Biographical Affidavit format:
 
 ## Generation Logic
 
-1. Read officer records from CSV.
+1. Read officer records from `data.json`.
 2. For each person where `prior_affidavit_on_file` is false, generate a full affidavit.
 3. For each person where `prior_affidavit_on_file` is true, generate a cover note stating the affidavit is already on file with the Utah DOI.
 4. Use the NAIC form layout for new affidavits.

@@ -11,9 +11,9 @@ This skill generates the **Captive Insurance Company Details** document for Spor
 
 This form captures the foundational identity of the captive: its legal name, domicile, office addresses, contact person, statutory agent, corporate parent chain, beneficial owners, organizational structure, association details, and NAIC classification codes.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
-The following fields must be read from the master CSV and mapped into the document:
+The following fields must be read from `data.json` and mapped into the document:
 
 ### Entity Identity
 - `legal_name` — Full legal name of the captive (e.g. "Sports and Entertainment Insurance Company, Inc.")
@@ -74,10 +74,10 @@ The output .docx should follow this section order:
 
 ## Generation Logic
 
-1. Read the master CSV and extract all fields listed above.
+1. Read `data.json` and extract all fields listed above.
 2. Load the template .docx (from `Consultants - Filing Documents - Sports/1. Captive Insurance Company Details.docx`).
-3. For each section, replace placeholder text or populate the corresponding paragraphs with CSV data.
-4. If a field is missing or empty in the CSV, insert a highlighted placeholder `[MISSING: field_name]` so the reviewer can fill it in.
+3. For each section, replace placeholder text or populate the corresponding paragraphs with JSON data.
+4. If a field is missing or null in `data.json`, insert a highlighted placeholder `[MISSING: field_name]` so the reviewer can fill it in.
 5. Save the output to the workspace for review.
 
 ## Validation Checks

@@ -11,7 +11,7 @@ This skill generates the **Service Providers Details** document for SEIC.
 
 Utah requires disclosure of all third-party service providers engaged by the captive. This includes the captive manager, legal counsel, independent auditor, actuary, investment advisor, and banking institution.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 For each service provider, extract:
 
@@ -45,7 +45,7 @@ The template uses the following provider categories in order:
 
 ## Generation Logic
 
-1. Read provider records from the CSV grouped by `provider_category`.
+1. Read provider records from `data.json` grouped by `provider_category`.
 2. Load template from `3. Service Providers Details.docx`.
 3. Populate each section; if a provider category has no data, insert `[MISSING: provider_category — no provider listed]`.
 4. Save output for review.

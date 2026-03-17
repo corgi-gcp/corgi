@@ -11,7 +11,7 @@ This skill generates the **Directors/Managers and Officers Details** document fo
 
 Lists every director, manager, and officer of the captive with their personal details, titles, roles, term dates, and background information. Utah requires this to assess the fitness of the people governing the captive.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 For each director/officer, extract:
 
@@ -43,7 +43,7 @@ The current roster includes:
 
 ## Generation Logic
 
-1. Read officer/director records from the CSV.
+1. Read officer/director records from `data.json`.
 2. Load template from `2. Directors_Managers and Officers.docx`.
 3. Populate the summary table and individual sections.
 4. Flag any person missing required fields with `[MISSING: field_name]`.

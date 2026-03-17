@@ -11,7 +11,7 @@ This skill generates the **Lines of Coverage Details** document for SEIC.
 
 Describes every line of insurance the captive will write — coverage type, policy form, limits, deductibles, gross premium, reinsurance arrangements, and claims basis. Utah reviews this to understand the captive's risk profile.
 
-## Data Fields to Extract from CSV
+## Data Fields to Extract from JSON
 
 For each line of coverage:
 
@@ -52,7 +52,7 @@ For each line of coverage:
 
 ## Generation Logic
 
-1. Read coverage records from CSV.
+1. Read coverage records from `data.json`.
 2. Load template from `6. Lines of Coverage Details.docx`.
 3. Build summary table and individual line sections.
 4. Compute totals for gross premium, net premium, and ceded amounts.

@@ -1,0 +1,22 @@
+{
+  "name": "utah-captive-audit-tool",
+  "version": "1.0.0",
+  "description": "Regulatory audit tool for Utah captive insurance filing packages",
+  "main": "src/index.ts",
+  "scripts": {
+    "audit": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "mammoth": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}
