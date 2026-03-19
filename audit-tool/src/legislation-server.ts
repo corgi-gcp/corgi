@@ -56,8 +56,11 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Health check for Railway
+app.get('/api/system/status', (_req, res) => res.json({ status: 'ok', service: 'filing-prep' }));
+
 // Serve the dashboard
-app.use(express.static(path.join(__dirname, '../../')));
+app.use(express.static(path.join(__dirname, '../')));
 
 // Helper: create Anthropic client using request body apiKey or fall back to env
 function _getClient(bodyApiKey?: string): Anthropic {
@@ -625,7 +628,7 @@ Return ONLY this JSON structure:
   "filingReady": true or false
 }`;
 
-    let messageContent: Anthropic.MessageParam['content'];
+    let messageContent: any;
 
     // Use native PDF support for PDFs, plain text for everything else
     const isPdf = fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');

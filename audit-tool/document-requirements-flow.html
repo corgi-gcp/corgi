@@ -2231,6 +2231,17 @@ select option { background:#FFF!important; color:#1A1D23!important; }
         <option value="claude-opus-4-5">claude-opus-4-5 (most capable)</option>
       </select>
     </div>
+    <div style="border-top:1px solid #2a3a4a;margin:12px 0 8px;padding-top:10px;">
+      <div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.5px;margin-bottom:8px;">HEBER AI CONNECTION</div>
+    </div>
+    <div class="modal-field">
+      <label>Heber AI Backend URL</label>
+      <input type="text" id="settingsHeberBackend" placeholder="https://heber-ai-backend.up.railway.app" autocomplete="off" />
+    </div>
+    <div class="modal-field">
+      <label>Heber AI Frontend URL</label>
+      <input type="text" id="settingsHeberFrontend" placeholder="https://heber-ai-frontend-staging.up.railway.app" autocomplete="off" />
+    </div>
     <div class="modal-actions">
       <button class="modal-cancel-btn" onclick="document.getElementById('settingsModal').classList.remove('open')">CANCEL</button>
       <button class="modal-save-btn" onclick="saveSettings()">SAVE</button>
@@ -2730,13 +2741,39 @@ select option { background:#FFF!important; color:#1A1D23!important; }
 
   <div class="connector"></div>
 
-  <!-- Attach to main product -->
-  <div class="attach-card">
+  <!-- Export to Heber AI -->
+  <div class="attach-card" id="heberExportCard">
     <div class="step-header-left">
-      <span class="attach-icon">&rsaquo;</span>
-      <span class="attach-title">Attach to main product</span>
+      <span class="attach-icon" style="color:#3B82F6;">&#10003;</span>
+      <span class="attach-title">Send to Heber AI</span>
     </div>
-    <div class="attach-desc">State-agnostic module plugs into existing captive insurance filing workflow &mdash; triggered by state selector at session start</div>
+    <div class="attach-desc" style="margin-bottom:16px;">Create a new filing project in Heber AI pre-populated with structure, variables, and skills from this preparation session.</div>
+
+    <div style="margin-left:30px;display:flex;flex-direction:column;gap:10px;max-width:460px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="font-size:12px;color:#8a9ab5;white-space:nowrap;min-width:100px;">Project Name</label>
+        <input type="text" id="heberProjectName" placeholder="e.g. Acme Captive — Utah 2026" autocomplete="off"
+               style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #2a3a4a;background:#0d1117;color:#e8ecf4;font-size:13px;font-family:'DM Sans',sans-serif;" />
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="font-size:12px;color:#8a9ab5;white-space:nowrap;min-width:100px;">Backend URL</label>
+        <span id="heberBackendDisplay" style="flex:1;font-size:12px;color:#5a6a7a;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not configured &mdash; set in Settings</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <button id="heberExportBtn" onclick="exportToHeberAI()"
+                style="padding:10px 24px;border-radius:8px;border:none;background:#1E3A5F;color:#fff;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.3px;transition:background .2s;">
+          CREATE FILING &#8594;
+        </button>
+        <span id="heberExportStatus" style="font-size:12px;color:#5a6a7a;"></span>
+      </div>
+      <div id="heberExportResult" style="display:none;margin-top:8px;padding:12px 16px;background:#0a1628;border:1px solid #1e3a5f;border-radius:8px;">
+        <span style="font-size:12px;color:#065F46;font-weight:600;">&#10003; Filing created successfully</span>
+        <a id="heberOpenLink" href="#" target="_blank" rel="noopener"
+           style="display:block;margin-top:6px;font-size:13px;color:#3B82F6;text-decoration:none;font-weight:600;">
+          Open in Heber AI &#8594;
+        </a>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -2759,7 +2796,9 @@ select option { background:#FFF!important; color:#1A1D23!important; }
 function _getSettings() {
   return {
     apiKey: localStorage.getItem('ciff_api_key') || '',
-    model: localStorage.getItem('ciff_model') || 'claude-haiku-4-5'
+    model: localStorage.getItem('ciff_model') || 'claude-haiku-4-5',
+    heberBackend: localStorage.getItem('ciff_heber_backend_url') || '',
+    heberFrontend: localStorage.getItem('ciff_heber_frontend_url') || ''
   };
 }
 
@@ -2770,6 +2809,8 @@ function openSettings() {
   for (var i = 0; i < sel.options.length; i++) {
     if (sel.options[i].value === s.model) { sel.selectedIndex = i; break; }
   }
+  document.getElementById('settingsHeberBackend').value = s.heberBackend;
+  document.getElementById('settingsHeberFrontend').value = s.heberFrontend;
   document.getElementById('settingsModal').classList.add('open');
 }
 
@@ -2779,7 +2820,186 @@ function saveSettings() {
   if (key) localStorage.setItem('ciff_api_key', key);
   else localStorage.removeItem('ciff_api_key');
   localStorage.setItem('ciff_model', model);
+
+  var hb = document.getElementById('settingsHeberBackend').value.trim().replace(/\/+$/, '');
+  var hf = document.getElementById('settingsHeberFrontend').value.trim().replace(/\/+$/, '');
+  if (hb) localStorage.setItem('ciff_heber_backend_url', hb);
+  else localStorage.removeItem('ciff_heber_backend_url');
+  if (hf) localStorage.setItem('ciff_heber_frontend_url', hf);
+  else localStorage.removeItem('ciff_heber_frontend_url');
+
   document.getElementById('settingsModal').classList.remove('open');
+}
+
+// ── Heber AI Export ──────────────────────────────────────────────────────────
+
+function _updateHeberDisplay() {
+  var s = _getSettings();
+  var el = document.getElementById('heberBackendDisplay');
+  if (el) el.textContent = s.heberBackend || 'Not configured \u2014 set in Settings';
+  // Pre-fill project name from step 1 state if empty
+  var nameInput = document.getElementById('heberProjectName');
+  if (nameInput && !nameInput.value && window._step1 && window._step1.state) {
+    nameInput.value = (window._step1.state || '') + ' Captive Filing';
+  }
+}
+
+function assemblePreprocessingResult() {
+  var step1 = window._step1 || {};
+  var step2 = window._step2 || {};  // checklist items
+  var step5 = window._step5 || {};
+  var items = (step5._items || (step5.docs && step5.docs.items) || []);
+  var checklistItems = (step2.items || []);
+
+  // Build structure sections from step5 items (generated docs)
+  var sections = [];
+  items.forEach(function(item, i) {
+    if (item.action === 'skipped') return;
+    var slug = (item.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    // Find matching checklist item for richer metadata
+    var chk = checklistItems.find(function(c) { return c.name === item.name; });
+
+    sections.push({
+      id: 'doc-' + (i + 1),
+      title: item.name,
+      description: item.note || (chk && chk.description) || '',
+      order: i + 1,
+      filing_doc_number: String(i + 1),
+      skill_ref: slug,
+      required_variables: [],
+      subsections: []
+    });
+  });
+
+  // Build skills from step5 items
+  var skills = [];
+  items.forEach(function(item, i) {
+    if (item.action === 'skipped') return;
+    var slug = (item.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    skills.push({
+      slug: slug,
+      name: item.name,
+      filing_doc_number: String(i + 1),
+      category: 'formation',
+      description: item.note || '',
+      content: '',
+      template_structure: [],
+      required_fields: [],
+      validation_checks: [],
+      cross_references: []
+    });
+  });
+
+  // Build variables from step1 context
+  var variables = [];
+  if (step1.state) {
+    variables.push({ key: 'domicile_state', label: 'Domicile State', type: 'text', group: 'entity', required: true, used_by: [], extracted_value: step1.state });
+  }
+  if (step1.caseType) {
+    variables.push({ key: 'business_context', label: 'Business Context', type: 'text', group: 'entity', required: false, used_by: [], extracted_value: step1.caseType });
+  }
+  if (step1.policyTypes) {
+    variables.push({ key: 'policy_types', label: 'Policy Types', type: 'list', group: 'coverage', required: false, used_by: [], extracted_value: step1.policyTypes.split(',').map(function(s) { return s.trim(); }) });
+  }
+
+  return {
+    source_filing_id: (step1.state || 'XX') + '-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4),
+    state: step1.state || '',
+    captive_type: 'Pure Captive',
+    extracted_at: new Date().toISOString(),
+    structure: { sections: sections },
+    variables: variables,
+    skills: skills
+  };
+}
+
+async function exportToHeberAI() {
+  var settings = _getSettings();
+  var btn = document.getElementById('heberExportBtn');
+  var status = document.getElementById('heberExportStatus');
+  var resultDiv = document.getElementById('heberExportResult');
+
+  // Validate
+  if (!settings.heberBackend) {
+    status.textContent = 'Set Heber AI Backend URL in Settings first.';
+    status.style.color = '#991B1B';
+    return;
+  }
+  if (!window._step5 || (!window._step5._items && !(window._step5.docs && window._step5.docs.items))) {
+    status.textContent = 'Run Step 05 first to generate documents.';
+    status.style.color = '#991B1B';
+    return;
+  }
+
+  var projectName = document.getElementById('heberProjectName').value.trim();
+  if (!projectName) {
+    status.textContent = 'Enter a project name.';
+    status.style.color = '#92400E';
+    return;
+  }
+
+  btn.disabled = true;
+  status.textContent = 'Creating filing...';
+  status.style.color = '#3B82F6';
+  resultDiv.style.display = 'none';
+
+  try {
+    // 1. Create the project in Heber AI
+    var createResp = await fetch(settings.heberBackend + '/api/filings/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        project_id: projectName.replace(/[^a-zA-Z0-9]+/g, '-').substring(0, 80),
+        captive_name: projectName,
+        domicile_state: (window._step1 && window._step1.state) || 'Unknown',
+        industry_vertical: (window._step1 && window._step1.caseType) || 'Captive Insurance',
+        target_capitalization: 0,
+        lines_of_coverage: window._step1 && window._step1.policyTypes
+          ? window._step1.policyTypes.split(',').map(function(s) { return s.trim(); })
+          : []
+      })
+    });
+
+    if (!createResp.ok) {
+      var errData = await createResp.json().catch(function() { return {}; });
+      throw new Error('Create failed: ' + (errData.error || errData.project_id || createResp.statusText));
+    }
+
+    var project = await createResp.json();
+    var projectId = project.project_id;
+    status.textContent = 'Importing structure & skills...';
+
+    // 2. Import the PreprocessingResult
+    var ppResult = assemblePreprocessingResult();
+    var importResp = await fetch(settings.heberBackend + '/api/filings/' + projectId + '/import-preprocessing/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ppResult)
+    });
+
+    if (!importResp.ok) {
+      var errData2 = await importResp.json().catch(function() { return {}; });
+      throw new Error('Import failed: ' + (errData2.error || importResp.statusText));
+    }
+
+    var stats = await importResp.json();
+    status.textContent = stats.tiles_created + ' tiles, ' + stats.variables_created + ' variables, ' +
+                         (stats.skills_matched + stats.skills_created) + ' skills';
+    status.style.color = '#065F46';
+
+    // 3. Show success link
+    var frontendUrl = settings.heberFrontend || 'http://localhost:5173';
+    var openLink = document.getElementById('heberOpenLink');
+    openLink.href = frontendUrl + '/filings/' + projectId;
+    openLink.textContent = 'Open in Heber AI \u2192 ' + projectId;
+    resultDiv.style.display = 'block';
+
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+    status.style.color = '#991B1B';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── Change 6: Lib tab filter state ───────────────────────────────────────────
@@ -5531,6 +5751,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initLibrary();
   initPolicyTypeChips();
   checkStepLocks();
+  _updateHeberDisplay();
 });
 </script>
 </body>

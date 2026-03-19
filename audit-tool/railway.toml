@@ -1,0 +1,7 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm install && npx ts-node src/legislation-server.ts"
+healthcheckPath = "/api/system/status"
+restartPolicyType = "ON_FAILURE"

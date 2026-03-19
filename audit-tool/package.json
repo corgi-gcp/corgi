@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "audit": "ts-node src/index.ts",
-    "serve": "ts-node src/legislation-server.ts"
+    "serve": "ts-node src/legislation-server.ts",
+    "start": "npx ts-node src/legislation-server.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
