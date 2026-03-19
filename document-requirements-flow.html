@@ -1125,6 +1125,46 @@
   .lib-card-btn.danger { color: #f87171; border-color: #3a1a1a; }
   .lib-card-btn.danger:hover { background: #1a0a0a; border-color: #f87171; }
 
+  /* ── Document identification panel ── */
+  .lib-ident-wrap {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #0f1820;
+    font-size: 11px;
+  }
+  .lib-ident-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .lib-ident-spinner {
+    color: #7aa2f7; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; animation: pulse 1.2s infinite;
+  }
+  .lib-ident-type {
+    font-weight: 700; color: #c8cdd8; font-size: 11px;
+    background: rgba(122,162,247,0.08); border: 1px solid rgba(122,162,247,0.2);
+    border-radius: 3px; padding: 1px 6px;
+  }
+  .lib-ident-conf-high   { color: #4ade80; font-size: 10px; }
+  .lib-ident-conf-medium { color: #fbbf24; font-size: 10px; }
+  .lib-ident-conf-low    { color: #f87171; font-size: 10px; }
+  .lib-ident-ready { color: #4ade80; font-size: 10px; }
+  .lib-ident-summary {
+    color: #7a8a9a; font-size: 10px; line-height: 1.4; margin-bottom: 5px;
+  }
+  .lib-cover-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .lib-cover-chip {
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2);
+    color: #4ade80; border-radius: 3px; padding: 2px 6px;
+  }
+  .lib-cover-chip.more { background: rgba(122,162,247,0.07); border-color: rgba(122,162,247,0.2); color: #7aa2f7; }
+  .lib-gap-chip {
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2);
+    color: #f87171; border-radius: 3px; padding: 2px 6px;
+  }
+  .lib-ident-error { color: #f87171; font-size: 10px; }
+
   /* ── Step 3 option cards ── */
   .option-card.active {
     border-color: rgba(74, 222, 128, 0.4);
@@ -2069,8 +2109,79 @@
           <span class="serff-terms-label">⬡ SERFF Search Terms</span>
           <button class="terms-copy-btn" id="termsCopyAllBtn" onclick="copyAllTerms()">COPY ALL</button>
         </div>
-        <div class="serff-terms-chips" id="serffTermsChips"></div>
+        <!-- Static policy type chips — always visible -->
+        <div style="margin-bottom:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:#3a4a5a;display:block;margin-bottom:6px;">POLICY TYPES</span>
+          <div id="policyTypeChips"></div>
+        </div>
+        <!-- AI-generated search terms — appear after Step 01 -->
+        <div id="serffTermsChips"></div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;" id="serffLinkRow">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:#5a6a7a;">SERFF PORTAL</span>
+          <a id="serffStateLink" href="#" target="_blank" rel="noopener"
+             style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7aa2f7;text-decoration:none;
+                    border:1px solid rgba(122,162,247,0.3);border-radius:4px;padding:4px 10px;
+                    background:rgba(122,162,247,0.06);transition:all .15s;"
+             onmouseover="this.style.background='rgba(122,162,247,0.15)'"
+             onmouseout="this.style.background='rgba(122,162,247,0.06)'">
+            ↗ filingaccess.serff.com
+          </a>
+          <a id="serffDoiLink" href="#" target="_blank" rel="noopener"
+             style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#4ade80;text-decoration:none;
+                    border:1px solid rgba(74,222,128,0.25);border-radius:4px;padding:4px 10px;
+                    background:rgba(74,222,128,0.05);transition:all .15s;"
+             onmouseover="this.style.background='rgba(74,222,128,0.12)'"
+             onmouseout="this.style.background='rgba(74,222,128,0.05)'">
+            ↗ State DOI
+          </a>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Step 02 (was 03) — Initial document checklist -->
+  <div class="step-card expandable">
+    <div class="step-header">
+      <div class="step-header-left">
+        <div class="step-number">02</div>
+        <div class="step-title">Initial document checklist</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="step-badge">LLM Extraction<span class="save-pill" id="savePill3"></span></div>
+        <span class="step-lock-icon" id="lockIcon3" style="display:none;">🔒</span>
+        <button class="step-expand-btn" id="expandBtn2" onclick="togglePanel2()">RUN &rsaquo;</button>
+      </div>
+    </div>
+    <div class="step-desc">LLM parses statutes &rarr; structured checklist of required filings with status tags (mandatory / conditional / optional)</div>
+
+    <div class="step-panel" id="checklistPanel">
+      <div class="checklist-hint" id="checklistHint">Paste legislation text below, or run Step 01 first to auto-fill.</div>
+      <textarea class="checklist-textarea" id="checklistInput" rows="5" placeholder="Paste legislation research text here, or complete Step 01 to auto-fill..."></textarea>
+      <div class="checklist-actions">
+        <button class="run-btn" id="checklistBtn" onclick="runChecklist()">EXTRACT CHECKLIST</button>
+        <button class="mock-btn" onclick="runMockStep2()">MOCK ▸</button>
+      </div>
+      <div class="checklist-status" id="checklistStatus"></div>
+      <div class="checklist-summary" id="checklistSummary"></div>
+      <div class="checklist-table-wrap" id="checklistTableWrap">
+        <table class="checklist-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Document</th>
+              <th>Status</th>
+              <th>Category</th>
+              <th>Citation</th>
+              <th>Priority</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="checklistTableBody"></tbody>
+        </table>
+      </div>
+      <button class="add-doc-btn" id="addChecklistBtn" onclick="showAddChecklistRow()">＋ ADD DOCUMENT</button>
     </div>
   </div>
 
@@ -2078,10 +2189,10 @@
 
   <!-- Section label -->
   <div class="section-label-row">
-    <div class="section-label">STEP 02 &mdash; SERFF DOCUMENT SOURCE</div>
+    <div class="section-label">STEP 03 &mdash; SERFF DOCUMENT SOURCE</div>
     <button class="skip-btn" id="skipBtn2" onclick="skipStep2()">SKIP THIS STEP ›</button>
   </div>
-  <div class="skipped-notice" id="skippedNotice2">⚠ Step 02 skipped — matching engine will run without SERFF document scoring.</div>
+  <div class="skipped-notice" id="skippedNotice2">⚠ Step 03 skipped — matching engine will run without SERFF document scoring.</div>
 
   <div class="connector" style="height: 18px;"></div>
 
@@ -2147,12 +2258,10 @@
 
   <div class="connector"></div>
 
-  <!-- Sub-module label -->
-  <div class="submodule-label">Step 2 &middot; Sub-Module &nbsp; <span>SERFF document quality scorer &mdash; determines template / model eligibility</span><span class="save-pill" id="savePill2"></span></div>
-
+  <!-- Sub-module + scorer hidden — scoring surfaced per-card in library grid -->
+  <div style="display:none;">
+  <div class="submodule-label">Step 3 &middot; Sub-Module &nbsp; <span>SERFF document quality scorer</span><span class="save-pill" id="savePill2"></span></div>
   <div class="connector" style="height: 12px;"></div>
-
-  <!-- Quality scorer — dynamic -->
   <div class="scorer-card idle" id="scorerCard">
     <div class="scorer-status" id="scorerStatus">Select a source option above to score a SERFF document.</div>
     <div class="scorer-grid" id="scorerGrid" style="display:none;">
@@ -2266,52 +2375,7 @@
 
     </div>
   </div>
-
-  <div class="connector"></div>
-
-  <!-- Step 03 -->
-  <div class="step-card expandable">
-    <div class="step-header">
-      <div class="step-header-left">
-        <div class="step-number">03</div>
-        <div class="step-title">Initial document checklist</div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <div class="step-badge">LLM Extraction<span class="save-pill" id="savePill3"></span></div>
-        <span class="step-lock-icon" id="lockIcon3" style="display:none;">🔒</span>
-        <button class="step-expand-btn" id="expandBtn2" onclick="togglePanel2()">RUN &rsaquo;</button>
-      </div>
-    </div>
-    <div class="step-desc">LLM parses statutes &rarr; structured checklist of required filings with status tags (mandatory / conditional / optional)</div>
-
-    <div class="step-panel" id="checklistPanel">
-      <div class="checklist-hint" id="checklistHint">Paste legislation text below, or run Step 01 first to auto-fill.</div>
-      <textarea class="checklist-textarea" id="checklistInput" rows="5" placeholder="Paste legislation research text here, or complete Step 01 to auto-fill..."></textarea>
-      <div class="checklist-actions">
-        <button class="run-btn" id="checklistBtn" onclick="runChecklist()">EXTRACT CHECKLIST</button>
-        <button class="mock-btn" onclick="runMockStep2()">MOCK ▸</button>
-      </div>
-      <div class="checklist-status" id="checklistStatus"></div>
-      <div class="checklist-summary" id="checklistSummary"></div>
-      <div class="checklist-table-wrap" id="checklistTableWrap">
-        <table class="checklist-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Document</th>
-              <th>Status</th>
-              <th>Category</th>
-              <th>Citation</th>
-              <th>Priority</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="checklistTableBody"></tbody>
-        </table>
-      </div>
-      <button class="add-doc-btn" id="addChecklistBtn" onclick="showAddChecklistRow()">＋ ADD DOCUMENT</button>
-    </div>
-  </div>
+  </div><!-- end hidden scorer wrapper -->
 
   <div class="connector"></div>
 
@@ -2430,6 +2494,7 @@
         <button class="pkg-btn" id="pkgBtn">COMPILE PACKAGE</button>
         <button class="dl-all-btn" id="dlAllBtn" style="display:none;" onclick="downloadAllDocs()">⬇ DOWNLOAD ALL</button>
         <button class="dl-all-btn" id="dlZipBtn" style="display:none;background:rgba(129,140,248,0.08);border-color:rgba(129,140,248,0.25);color:#818cf8;" onclick="downloadAllAsZip()">DOWNLOAD ALL AS ZIP ⬇</button>
+        <button class="mock-btn" id="filingStructureBtn" onclick="generateFilingStructure()" style="background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.25);color:#4ade80;">📄 FILING STRUCTURE</button>
       </div>
 
       <div class="match-status" id="agentStatus"></div>
@@ -2665,7 +2730,7 @@ async function runResearch() {
   window._step5 = { docs: null, _items: null };
   // Clear SERFF terms
   var serffRow = document.getElementById('serffTermsRow');
-  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  if (serffRow) { document.getElementById('serffTermsChips').innerHTML = ''; }
   // Clear checklist
   document.getElementById('checklistInput').value = '';
   document.getElementById('checklistSummary').classList.remove('visible');
@@ -2725,6 +2790,71 @@ function notifyStep2Ready() {
   input.value = window._step1.text;
   const s1 = document.getElementById('agentSrc1');
   if (s1 && window._step1.state) s1.textContent = window._step1.state + ' — legislation loaded';
+  if (window._step1.state) updateSerffLinks(window._step1.state);
+}
+
+// ── SERFF State Links ─────────────────────────────────────────────────────────
+
+const _STATE_ABBREV = {
+  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+  'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+  'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
+  'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD',
+  'Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS',
+  'Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
+  'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC',
+  'North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA',
+  'Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN',
+  'Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
+  'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC'
+};
+
+// State DOI website URLs
+const _STATE_DOI = {
+  AL:'https://www.aldoi.gov',AK:'https://www.commerce.alaska.gov/web/ins',
+  AZ:'https://insurance.az.gov',AR:'https://www.insurance.arkansas.gov',
+  CA:'https://www.insurance.ca.gov',CO:'https://doi.colorado.gov',
+  CT:'https://portal.ct.gov/CID',DE:'https://insurance.delaware.gov',
+  FL:'https://www.myfloridacfo.com/division/insurance',GA:'https://oci.georgia.gov',
+  HI:'https://cca.hawaii.gov/ins',ID:'https://doi.idaho.gov',
+  IL:'https://insurance.illinois.gov',IN:'https://www.in.gov/idoi',
+  IA:'https://iid.iowa.gov',KS:'https://insurance.kansas.gov',
+  KY:'https://insurance.ky.gov',LA:'https://www.ldi.la.gov',
+  ME:'https://www.maine.gov/pfr/insurance',MD:'https://insurance.maryland.gov',
+  MA:'https://www.mass.gov/orgs/division-of-insurance',MI:'https://www.michigan.gov/difs',
+  MN:'https://mn.gov/commerce',MS:'https://www.mid.ms.gov',
+  MO:'https://insurance.mo.gov',MT:'https://csimt.gov',
+  NE:'https://doi.nebraska.gov',NV:'https://doi.nv.gov',
+  NH:'https://www.nh.gov/insurance',NJ:'https://www.njconsumeraffairs.gov/dbi',
+  NM:'https://www.osi.state.nm.us',NY:'https://www.dfs.ny.gov',
+  NC:'https://www.ncdoi.gov',ND:'https://www.nd.gov/ndins',
+  OH:'https://insurance.ohio.gov',OK:'https://www.oid.ok.gov',
+  OR:'https://insurance.oregon.gov',PA:'https://www.insurance.pa.gov',
+  RI:'https://dbr.ri.gov/insurance',SC:'https://doi.sc.gov',
+  SD:'https://dlr.sd.gov/insurance',TN:'https://www.tn.gov/commerce/insurance',
+  TX:'https://www.tdi.texas.gov',UT:'https://insurance.utah.gov',
+  VT:'https://www.bishca.state.vt.us',VA:'https://www.scc.virginia.gov/pages/Bureau-of-Insurance',
+  WA:'https://www.insurance.wa.gov',WV:'https://www.wvinsurance.gov',
+  WI:'https://oci.wi.gov',WY:'https://insurance.wyo.gov',
+  DC:'https://disb.dc.gov'
+};
+
+function updateSerffLinks(stateName) {
+  var abbr = _STATE_ABBREV[stateName];
+  if (!abbr) return;
+
+  var serffLink = document.getElementById('serffStateLink');
+  var doiLink   = document.getElementById('serffDoiLink');
+
+  if (serffLink) {
+    serffLink.href = 'https://filingaccess.serff.com/sfa/home/' + abbr;
+    serffLink.textContent = '↗ SERFF — ' + abbr;
+  }
+  if (doiLink) {
+    var doiUrl = _STATE_DOI[abbr] || 'https://www.naic.org/state_web_map.htm';
+    doiLink.href = doiUrl;
+    doiLink.textContent = '↗ ' + stateName + ' DOI';
+  }
 }
 
 // ── SERFF Search Terms ────────────────────────────────────────────────────────
@@ -2737,6 +2867,33 @@ const MOCK_SERFF_TERMS = [
   'captive economic benefit', 'captive pro forma financials',
   'association member captive', 'captive biographical affidavit'
 ];
+
+// ── Policy type chips (always shown) ─────────────────────────────────────────
+const POLICY_TYPES = [
+  // Captive structures
+  'pure captive', 'association captive', 'group captive', 'cell captive',
+  'sponsored captive', 'protected cell', 'series LLC captive', 'risk retention group',
+  // Lines of coverage
+  'general liability', 'commercial general liability (CGL)', 'professional liability (E&O)',
+  'directors & officers (D&O)', 'workers compensation', 'medical stop-loss',
+  'property coverage', 'inland marine', 'cyber liability', 'product liability',
+  'excess / umbrella', 'event cancellation', 'participant accident & medical',
+  'abuse & misconduct liability', 'employment practices liability (EPLI)',
+  // Industry-specific
+  'sports captive', 'entertainment captive', 'trucking captive', 'healthcare captive',
+  'construction captive', 'real estate captive', 'nonprofit captive', 'franchise captive',
+];
+
+function initPolicyTypeChips() {
+  var el = document.getElementById('policyTypeChips');
+  if (!el) return;
+  el.innerHTML = POLICY_TYPES.map(function(t) {
+    return '<span class="term-chip" title="Click to copy" onclick="copyTerm(this,\'' + t.replace(/'/g, "\\'") + '\')">' + esc(t) + '</span>';
+  }).join('');
+  // Make the whole terms row visible immediately
+  var row = document.getElementById('serffTermsRow');
+  if (row) row.classList.add('visible');
+}
 
 function renderSerffTerms(terms) {
   var row = document.getElementById('serffTermsRow');
@@ -2931,10 +3088,98 @@ function _addLibFiles(fileList) {
       _libSaveFile(id, ev.target.result, file.name).then(function() {
         pending--;
         if (pending === 0) { _libSaveMeta(); _rebuildLibGrid(); }
+        // Auto-identify after save — capture file ref in closure
+        identifyLibDoc(id, file);
       });
     };
     reader.readAsArrayBuffer(file);
   });
+}
+
+// Alias for identify function
+function _libLoadFile(id) {
+  return _libGetFile(id).then(function(rec) { return rec ? rec.data : null; });
+}
+
+// ── Document Identification ────────────────────────────────────────────────────
+async function identifyLibDoc(idOrFile, fileArg) {
+  // Can be called as identifyLibDoc(id, file) from upload, or identifyLibDoc(id) from button
+  var id = idOrFile;
+  var doc = _libDocs[id];
+  if (!doc) return;
+
+  // Mark as identifying and update card immediately
+  doc.identStatus = 'identifying';
+  _libSaveMeta();
+  var card = document.getElementById('lc-' + id);
+  if (card) card.outerHTML = _renderLibCard(doc);
+
+  try {
+    var file = fileArg;
+
+    // If called from button (no file arg), load from IndexedDB
+    if (!file) {
+      var stored = await _libLoadFile(id);
+      if (!stored) throw new Error('File not found in library — re-upload to identify');
+      var mime = doc.type === 'PDF' ? 'application/pdf'
+               : doc.type === 'XML' ? 'text/xml'
+               : 'text/plain';
+      file = new File([stored], doc.name, { type: mime });
+    }
+
+    var isPdf    = file.type === 'application/pdf' || doc.name.toLowerCase().endsWith('.pdf');
+    var isText   = ['txt','xml','csv','json','md'].includes((doc.name.split('.').pop()||'').toLowerCase());
+    var fileContent, isBase64;
+
+    if (isPdf || !isText) {
+      // Read as base64 data URL, strip the prefix
+      fileContent = await new Promise(function(res) {
+        var r = new FileReader();
+        r.onload = function(ev) { res(ev.target.result.split(',')[1]); };
+        r.readAsDataURL(file);
+      });
+      isBase64 = true;
+    } else {
+      fileContent = await new Promise(function(res) {
+        var r = new FileReader();
+        r.onload = function(ev) { res(ev.target.result); };
+        r.readAsText(file);
+      });
+      isBase64 = false;
+    }
+
+    var checklist = (window._step2 && window._step2.items)
+      ? window._step2.items.map(function(item){ return { id: item.id, name: item.name }; })
+      : [];
+
+    var apiKey = localStorage.getItem('ciff_apiKey') || undefined;
+    var model  = localStorage.getItem('ciff_model')  || undefined;
+    var baseUrl = 'http://localhost:3001';
+
+    var resp = await fetch(baseUrl + '/api/identify-serff-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: doc.name, fileType: file.type||'application/octet-stream',
+        fileContent: fileContent, isBase64: isBase64, checklist: checklist,
+        apiKey: apiKey, model: model })
+    });
+
+    if (!resp.ok) { var e = await resp.json(); throw new Error(e.error || resp.status); }
+    var result = await resp.json();
+
+    doc.identified   = result;
+    doc.identStatus  = 'done';
+    if (result.documentType && result.confidence === 'high') doc.identifiedType = result.documentType;
+
+  } catch (err) {
+    doc.identStatus = 'error';
+    doc.identError  = err.message;
+  }
+
+  _libSaveMeta();
+  var updated = document.getElementById('lc-' + id);
+  if (updated) updated.outerHTML = _renderLibCard(doc);
+  else _rebuildLibGrid();
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -2975,6 +3220,40 @@ function _renderLibCard(doc) {
   var meta = doc.isBuiltIn
     ? '<span class="lib-card-cat">' + esc(doc.category||'') + '</span>'
     : '<span class="lib-card-cat">' + _fmtSize(doc.size) + (doc.uploadedAt?' · '+doc.uploadedAt:'') + '</span>';
+  // Build identification panel
+  var identHtml = '';
+  if (doc.identStatus === 'identifying') {
+    identHtml = '<div class="lib-ident-wrap"><div class="lib-ident-row"><span class="lib-ident-spinner">🔍 IDENTIFYING…</span></div></div>';
+  } else if (doc.identStatus === 'error') {
+    identHtml = '<div class="lib-ident-wrap"><span class="lib-ident-error">⚠ ' + esc(doc.identError||'identification failed') + '</span></div>';
+  } else if (doc.identStatus === 'done' && doc.identified) {
+    var idt = doc.identified;
+    var confClass = 'lib-ident-conf-' + (idt.confidence||'low');
+    var readyBadge = idt.filingReady ? ' <span class="lib-ident-ready">✓ filing ready</span>' : '';
+    var summaryEl = idt.summary ? '<div class="lib-ident-summary">' + esc(idt.summary) + '</div>' : '';
+    var coversHtml = '';
+    if (idt.coveredRequirements && idt.coveredRequirements.length) {
+      coversHtml = '<div class="lib-cover-chips">' +
+        idt.coveredRequirements.slice(0,4).map(function(r){ return '<span class="lib-cover-chip">✓ ' + esc(r) + '</span>'; }).join('') +
+        (idt.coveredRequirements.length > 4 ? '<span class="lib-cover-chip more">+' + (idt.coveredRequirements.length-4) + '</span>' : '') +
+        '</div>';
+    }
+    var gapsHtml = '';
+    if (idt.gaps && idt.gaps.length) {
+      gapsHtml = '<div class="lib-cover-chips">' +
+        idt.gaps.slice(0,2).map(function(g){ return '<span class="lib-gap-chip">✗ ' + esc(g) + '</span>'; }).join('') +
+        '</div>';
+    }
+    identHtml = '<div class="lib-ident-wrap">' +
+      '<div class="lib-ident-row">' +
+        '<span class="lib-ident-type">' + esc(idt.documentType||'Unknown') + '</span>' +
+        '<span class="' + confClass + '">' + (idt.confidence||'') + '</span>' +
+        readyBadge +
+      '</div>' +
+      summaryEl + coversHtml + gapsHtml +
+    '</div>';
+  }
+
   return '<div class="lib-card' + (sel?' selected':'') + '" id="lc-' + doc.id + '">' +
     '<div class="lib-card-top">' +
       '<span class="lib-card-type type-' + (doc.type||'file').toLowerCase() + '">' + esc(doc.type||'FILE') + '</span>' +
@@ -2985,9 +3264,11 @@ function _renderLibCard(doc) {
     '<div class="lib-card-score">' + scoreHtml + '</div>' +
     '<div class="lib-card-actions">' +
       '<button class="lib-card-btn" onclick="scoreLibDoc(\'' + doc.id + '\')">SCORE ▸</button>' +
+      '<button class="lib-card-btn" onclick="identifyLibDoc(\'' + doc.id + '\')">🔍 ID</button>' +
       dlBtn +
       '<button class="lib-card-btn danger" onclick="removeLibDoc(\'' + doc.id + '\')">✕</button>' +
     '</div>' +
+    identHtml +
   '</div>';
 }
 
@@ -3098,10 +3379,23 @@ function removeLibDoc(id) {
 }
 
 // ── Match ─────────────────────────────────────────────────────────────────────
+// Re-identify uploaded (non-built-in) docs that were identified without a checklist
+// Called automatically when Step 02 checklist is completed
+function _reidentifyLibDocsWithChecklist() {
+  if (!window._step2 || !window._step2.items || !window._step2.items.length) return;
+  var toReidentify = Object.values(_libDocs).filter(function(d) {
+    return !d.isBuiltIn && d.identStatus === 'done' && d.identified &&
+           (!d.identified.coveredRequirements || !d.identified.coveredRequirements.length);
+  });
+  if (!toReidentify.length) return;
+  console.log('[SERFF] Re-identifying', toReidentify.length, 'docs now that checklist is available');
+  toReidentify.forEach(function(doc) { identifyLibDoc(doc.id); });
+}
+
 function matchLibWithChecklist() {
   var checklist = window._step2 && window._step2.items;
   if (!checklist || !checklist.length) {
-    alert('Run Step 03 (EXTRACT CHECKLIST) first to get requirements, or use MOCK ▸ in Step 03.');
+    alert('Run Step 02 (EXTRACT CHECKLIST) first to get requirements, or use MOCK ▸ in Step 02.');
     return;
   }
   if (!_libSelected.size) { alert('Select at least one document from the library first.'); return; }
@@ -3172,25 +3466,70 @@ function _repoMatchScore(checkName, serffName) {
   return Math.min(78, Math.round(overlap / Math.max(cw.length, sw.length) * 100));
 }
 
+// Score a checklist item against a doc — uses AI identification first, name match as fallback
+function _docMatchScore(checkItemName, doc) {
+  // 1. AI identification result (highest trust)
+  if (doc.identified && doc.identified.coveredRequirements) {
+    var covered = doc.identified.coveredRequirements;
+    // Exact match in covered list
+    var exactAI = covered.some(function(r) {
+      return _normName(r) === _normName(checkItemName);
+    });
+    if (exactAI) return { score: 100, source: 'AI' };
+    // Fuzzy match in covered list (name scorer against each covered requirement)
+    var bestAI = 0;
+    covered.forEach(function(r) {
+      var s = _repoMatchScore(checkItemName, r);
+      if (s > bestAI) bestAI = s;
+    });
+    if (bestAI >= 60) return { score: bestAI, source: 'AI' };
+  }
+  // 2. AI identified doc type vs checklist item name
+  if (doc.identified && doc.identified.documentType) {
+    var typeScore = _repoMatchScore(checkItemName, doc.identified.documentType);
+    if (typeScore >= 60) return { score: typeScore, source: 'AI-type' };
+  }
+  // 3. Fallback: name-based matching
+  var nameScore = _repoMatchScore(checkItemName, doc.name);
+  return { score: nameScore, source: 'name' };
+}
+
 function _renderRepoMatch(checklist, selectedDocs) {
   var tbody = document.getElementById('repoMatchBody');
   var summaryEl = document.getElementById('repoMatchSummary');
   var found = 0, partial = 0, missing = 0;
+  var aiUsed = 0;
 
   tbody.innerHTML = checklist.map(function(item, i) {
-    var best = null, bestScore = 0;
+    var best = null, bestScore = 0, bestSource = 'name';
     selectedDocs.forEach(function(doc) {
-      var s = _repoMatchScore(item.name, doc.name);
-      if (s > bestScore) { bestScore = s; best = doc; }
+      var result = _docMatchScore(item.name, doc);
+      if (result.score > bestScore) {
+        bestScore = result.score;
+        bestSource = result.source;
+        best = doc;
+      }
     });
-    var badge;
-    if      (bestScore >= 80) { badge='found';   found++;   }
-    else if (bestScore >= 40) { badge='partial'; partial++; }
-    else                      { badge='missing'; missing++; }
 
+    var badge;
+    if      (bestScore >= 80) { badge = 'found';   found++;   }
+    else if (bestScore >= 40) { badge = 'partial'; partial++; }
+    else                      { badge = 'missing'; missing++; }
+
+    if (bestSource === 'AI' || bestSource === 'AI-type') aiUsed++;
+
+    // Match cell: show identified doc type if AI matched, otherwise file name
+    var matchName = best
+      ? (bestSource !== 'name' && best.identified && best.identified.documentType
+          ? best.identified.documentType + ' <span style="color:#3a4a5a;font-size:10px;">(' + esc(best.name.slice(0,24)) + '…)</span>'
+          : esc(best.name))
+      : null;
+    var sourceTag = bestSource !== 'name' && badge !== 'missing'
+      ? ' <span style="font-size:9px;color:#4ade80;font-family:\'JetBrains Mono\',monospace;">AI</span>' : '';
     var matchCell = (best && badge !== 'missing')
-      ? '<span style="color:#7aa2f7;">' + esc(best.name) + '</span>'
+      ? '<span style="color:#7aa2f7;">' + matchName + '</span>' + sourceTag
       : '<span style="color:#3a4a5a;">—</span>';
+
     var label = badge === 'found' ? '✓ covered' : badge === 'partial' ? '~ partial' : '✗ missing';
 
     return '<tr>' +
@@ -3201,12 +3540,17 @@ function _renderRepoMatch(checklist, selectedDocs) {
       '</tr>';
   }).join('');
 
-  var pct = Math.round((found + partial*0.5) / checklist.length * 100);
+  var pct = Math.round((found + partial * 0.5) / checklist.length * 100);
+  var aiNote = aiUsed > 0
+    ? '<div class="repo-ms-item"><div class="repo-ms-num" style="color:#4ade80;">' + aiUsed + '</div><div class="repo-ms-lbl">AI MATCHED</div></div>'
+    : '';
+
   summaryEl.innerHTML =
     '<div class="repo-ms-item"><div class="repo-ms-num found">'   + found   + '</div><div class="repo-ms-lbl">COVERED</div></div>' +
     '<div class="repo-ms-item"><div class="repo-ms-num partial">' + partial + '</div><div class="repo-ms-lbl">PARTIAL</div></div>' +
     '<div class="repo-ms-item"><div class="repo-ms-num missing">' + missing + '</div><div class="repo-ms-lbl">MISSING</div></div>' +
-    '<div class="repo-ms-item"><div class="repo-ms-num" style="color:#7aa2f7;">' + pct + '%</div><div class="repo-ms-lbl">COVERAGE</div></div>';
+    '<div class="repo-ms-item"><div class="repo-ms-num" style="color:#7aa2f7;">' + pct + '%</div><div class="repo-ms-lbl">COVERAGE</div></div>' +
+    aiNote;
 
   document.getElementById('repoMatchWrap').classList.add('visible');
   document.getElementById('repoMatchWrap').scrollIntoView({ behavior:'smooth', block:'nearest' });
@@ -3282,6 +3626,8 @@ async function runChecklist() {
             checkStepLocks();
             statusEl.textContent = `Done — ${msg.checklist.items?.length ?? 0} documents identified.`;
             statusEl.className = 'checklist-status';
+            // Re-identify any SERFF docs that were uploaded before checklist was ready
+            _reidentifyLibDocsWithChecklist();
           } else if (msg.type === 'error') {
             statusEl.textContent = 'Error: ' + msg.message;
             statusEl.className = 'checklist-status error';
@@ -3461,7 +3807,7 @@ function runMockStep1() {
   window._step4 = { matches: null };
   window._step5 = { docs: null, _items: null };
   var serffRow = document.getElementById('serffTermsRow');
-  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  if (serffRow) { document.getElementById('serffTermsChips').innerHTML = ''; }
   document.getElementById('checklistInput').value = '';
   document.getElementById('checklistSummary').classList.remove('visible');
   document.getElementById('checklistTableWrap').classList.remove('visible');
@@ -3549,6 +3895,7 @@ function runMockStep2() {
     window._step2 = MOCK_STEP2_CHECKLIST;
     saveStep(3, window._step2);
     checkStepLocks();
+    _reidentifyLibDocsWithChecklist();
   }, 1400);
 }
 
@@ -3846,19 +4193,58 @@ function updateMatchSources() {
   var src3 = document.getElementById('matchSrc3');
   src2.textContent = (window._step2 && window._step2.items)
     ? window._step2.items.length + ' requirements (' + (window._step2.state || '?') + ')'
-    : 'Run Step 03 first';
-  src3.textContent = (window._step3 && window._step3.score)
-    ? 'Tier ' + window._step3.score.tier + ' — ' + window._step3.score.tierLabel
     : 'Run Step 02 first';
+  // Show SERFF library selection count (preferred) or old single-doc scorer
+  var libCount = _libSelected ? _libSelected.size : 0;
+  if (libCount > 0) {
+    var idCount = Object.values(_libDocs).filter(function(d){ return _libSelected.has(d.id) && d.identified; }).length;
+    src3.textContent = libCount + ' SERFF doc' + (libCount > 1 ? 's' : '') + ' selected' +
+      (idCount > 0 ? ' · ' + idCount + ' AI-identified' : '');
+  } else if (window._step3 && window._step3.score) {
+    src3.textContent = 'Tier ' + window._step3.score.tier + ' — ' + window._step3.score.tierLabel;
+  } else {
+    src3.textContent = 'Select docs in Step 03 first';
+  }
+}
+
+// Build a structured text document from selected SERFF library docs for Step 4 matching
+function _buildSerffContext() {
+  var selectedDocs = Object.values(_libDocs).filter(function(d) { return _libSelected.has(d.id); });
+  if (!selectedDocs.length) return '';
+
+  var lines = ['SERFF REFERENCE LIBRARY — ' + selectedDocs.length + ' document(s) selected\n'];
+  selectedDocs.forEach(function(doc, i) {
+    lines.push('=== Document ' + (i + 1) + ': ' + doc.name + ' ===');
+    if (doc.identified) {
+      if (doc.identified.documentType) lines.push('Type: ' + doc.identified.documentType);
+      if (doc.identified.relevanceScore) lines.push('Relevance: ' + doc.identified.relevanceScore + '%');
+      if (doc.identified.coveredRequirements && doc.identified.coveredRequirements.length)
+        lines.push('Covers: ' + doc.identified.coveredRequirements.join(', '));
+      if (doc.identified.notes) lines.push('Notes: ' + doc.identified.notes);
+    } else if (doc.isBuiltIn) {
+      lines.push('Category: ' + doc.category);
+    }
+    if (doc.score) lines.push('Quality Score: ' + doc.score + '/100 (Tier ' + (doc.tier || '?') + ')');
+    lines.push('');
+  });
+  return lines.join('\n');
 }
 
 async function runMatch() {
   var statusEl = document.getElementById('matchStatus');
   var btn = document.getElementById('matchRunBtn');
   if (!window._step2 || !window._step2.items) {
-    statusEl.textContent = 'Complete Step 03 (checklist) first to get requirements.';
+    statusEl.textContent = 'Complete Step 02 (checklist) first to get requirements.';
     statusEl.className = 'match-status error'; return;
   }
+
+  // Build SERFF context from library selection (preferred) or fall back to old _step3.content
+  var serffContext = _buildSerffContext();
+  if (!serffContext && !window._step3.content) {
+    statusEl.textContent = 'Select SERFF documents in Step 03 to use as reference, or upload a document.';
+    statusEl.className = 'match-status error'; return;
+  }
+
   statusEl.textContent = 'Connecting...';
   statusEl.className = 'match-status active';
   btn.disabled = true;
@@ -3870,7 +4256,7 @@ async function runMatch() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         requirements: window._step2.items,
-        document: window._step3.content || '',
+        document: serffContext || window._step3.content || '',
         state: window._step2.state,
         apiKey: settings.apiKey, model: settings.model,
       }),
@@ -4043,6 +4429,7 @@ async function runAgent() {
       body: JSON.stringify({
         requirements: window._step2.items,
         matches: window._step4.matches ? window._step4.matches.items : [],
+        serffContext: _buildSerffContext(),
         legislation: window._step1.text || '',
         state: window._step2.state,
         apiKey: settings.apiKey, model: settings.model,
@@ -4512,7 +4899,7 @@ function clearSession() {
   });
   window._step1 = { state: '', caseType: '', text: '', terms: [] };
   var serffRow = document.getElementById('serffTermsRow');
-  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  if (serffRow) { document.getElementById('serffTermsChips').innerHTML = ''; }
   window._step2 = undefined;
   window._step3 = { filename: '', content: '', score: null };
   window._step4 = { matches: null };
@@ -4787,6 +5174,148 @@ async function downloadAllAsZip() {
   });
 }
 
+// ── Filing Structure Generator ────────────────────────────────────────────────
+function generateFilingStructure() {
+  var state    = (window._step1 && window._step1.state)    || 'Unknown State';
+  var caseType = (window._step1 && window._step1.caseType) || 'Captive Insurance';
+  var items    = (window._step5 && window._step5._items)   || [];
+  var checklist= (window._step2 && window._step2.items)    || [];
+  var date     = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  var today    = new Date().toISOString().slice(0,10);
+
+  // Group items by action
+  var adopted   = items.filter(function(d){ return d.action === 'adopted'; });
+  var adapted   = items.filter(function(d){ return d.action === 'adapted'; });
+  var generated = items.filter(function(d){ return d.action === 'generated'; });
+  var skipped   = items.filter(function(d){ return d.action === 'skipped'; });
+
+  // Group checklist by priority
+  var blocking = checklist.filter(function(d){ return d.priority === 'BLOCKING'; });
+  var high     = checklist.filter(function(d){ return d.priority === 'HIGH'; });
+
+  // Build markdown
+  var lines = [];
+  lines.push('# Captive Insurance Filing — Document Structure');
+  lines.push('');
+  lines.push('| Field | Value |');
+  lines.push('|-------|-------|');
+  lines.push('| State | ' + state + ' |');
+  lines.push('| Case Type | ' + caseType + ' |');
+  lines.push('| Generated | ' + date + ' |');
+  lines.push('| Total Documents | ' + items.length + ' |');
+  lines.push('| Coverage | ' + adopted.length + ' adopted · ' + adapted.length + ' adapted · ' + generated.length + ' generated |');
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Filing folder tree
+  lines.push('## 📁 Filing Package Structure');
+  lines.push('');
+  lines.push('```');
+  lines.push(state.replace(/\s+/g,'_') + '_Captive_Filing/');
+  lines.push('│');
+
+  var sections = [
+    { label: '01_Formation',    keywords: ['application','formation','biographical','affidavit','economic','benefit'] },
+    { label: '02_Financial',    keywords: ['pro forma','financial','capitalization','letter of credit','investment','feasibility'] },
+    { label: '03_Legal',        keywords: ['articles','bylaws','operating','membership','commissioner','certificate','board','organization'] },
+    { label: '04_Regulatory',   keywords: ['reinsurance','cpa','actuary','naic','premium tax','annual statement'] },
+    { label: '05_Operational',  keywords: ['management','service provider','claims','loss control'] },
+    { label: '06_Generated',    keywords: [] },  // catch-all for generated
+  ];
+
+  var assigned = new Set();
+  sections.forEach(function(sec, si) {
+    var secItems = items.filter(function(d) {
+      if (assigned.has(d.name)) return false;
+      if (sec.keywords.length === 0) return d.action === 'generated' && !assigned.has(d.name);
+      var nm = d.name.toLowerCase();
+      return sec.keywords.some(function(k){ return nm.includes(k); });
+    });
+    if (secItems.length === 0) return;
+    secItems.forEach(function(d){ assigned.add(d.name); });
+    var prefix = si < sections.length - 1 ? '├── ' : '└── ';
+    lines.push(prefix + sec.label + '/');
+    secItems.forEach(function(d, di) {
+      var isLast = di === secItems.length - 1;
+      var icon = d.action === 'adopted' ? '✓' : d.action === 'adapted' ? '~' : '★';
+      var connector = si < sections.length - 1 ? '│' : ' ';
+      lines.push(connector + '   ' + (isLast ? '└── ' : '├── ') + icon + ' ' + (d.output || d.name + '.md'));
+    });
+  });
+  lines.push('```');
+  lines.push('');
+  lines.push('> ✓ adopted from SERFF reference &nbsp;|&nbsp; ~ adapted from reference &nbsp;|&nbsp; ★ generated from statute');
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Document manifest
+  lines.push('## 📋 Document Manifest');
+  lines.push('');
+  lines.push('| # | Document | Action | Source / Note | Priority |');
+  lines.push('|---|----------|--------|---------------|----------|');
+  items.forEach(function(d, i) {
+    var pri = d.priority || (checklist.find(function(c){ return c.name === d.name; }) || {}).priority || '—';
+    var actionBadge = d.action === 'adopted' ? '✓ Adopted' : d.action === 'adapted' ? '~ Adapted' : d.action === 'generated' ? '★ Generated' : '— Skipped';
+    lines.push('| ' + String(i+1).padStart(2,'0') + ' | **' + d.name + '** | ' + actionBadge + ' | ' + (d.note||'—') + ' | ' + pri + ' |');
+  });
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Blocking requirements callout
+  if (blocking.length > 0) {
+    lines.push('## 🔴 Blocking Requirements');
+    lines.push('');
+    blocking.forEach(function(d){ lines.push('- **' + d.name + '** — ' + (d.description||'Required before submission')); });
+    lines.push('');
+  }
+  if (high.length > 0) {
+    lines.push('## 🟡 High Priority');
+    lines.push('');
+    high.forEach(function(d){ lines.push('- ' + d.name + (d.description?' — '+d.description:'')); });
+    lines.push('');
+  }
+
+  // Legislation reference
+  if (window._step1 && window._step1.text) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## ⚖ Legislation Reference');
+    lines.push('');
+    lines.push('> State: **' + state + '** &nbsp;|&nbsp; Case: **' + caseType + '**');
+    lines.push('');
+    var excerpt = window._step1.text.slice(0, 600).replace(/\n+/g, '\n').trim();
+    lines.push('```');
+    lines.push(excerpt + (window._step1.text.length > 600 ? '\n...[truncated — see Step 01 full output]' : ''));
+    lines.push('```');
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*Generated by Captive Insurance Filing Tool — Multi-State Module*  ');
+  lines.push('*' + date + '*');
+
+  // Download
+  var content  = lines.join('\n');
+  var fname    = 'filing-structure-' + state.toLowerCase().replace(/\s+/g,'-') + '-' + today + '.md';
+  var blob     = new Blob([content], { type: 'text/markdown' });
+  var url      = URL.createObjectURL(blob);
+  var a        = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+
+  // Visual feedback
+  var btn = document.getElementById('filingStructureBtn');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ DOWNLOADED';
+    setTimeout(function(){ btn.textContent = orig; }, 2500);
+  }
+}
+
 // ── Override restoreSession to show pill and check locks ─────────────────────
 var _origRestoreSession = restoreSession;
 function _restoreSession() {
@@ -4803,8 +5332,8 @@ document.addEventListener('DOMContentLoaded', function() {
   _restoreSession();
   _checkServerOnline();
   setInterval(_checkServerOnline, 20000);
-  // Initialize lib
   initLibrary();
+  initPolicyTypeChips();
   checkStepLocks();
 });
 </script>

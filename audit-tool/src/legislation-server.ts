@@ -7,6 +7,43 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config(); // fallback: look in cwd
 
+// ── Robust JSON extractor ────────────────────────────────────────────────────
+// Handles: ```json ... ```, ``` ... ```, plain JSON, text before/after fences,
+// truncated responses missing the closing fence, and arrays as top-level.
+function extractJson(raw: string): string {
+  // 1. Try to find a fenced block (```json ... ``` or ``` ... ```)
+  const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+  if (fenceMatch) {
+    const inner = fenceMatch[1].trim();
+    if (inner.startsWith('{') || inner.startsWith('[')) return inner;
+  }
+
+  // 2. Find the outermost { } or [ ] block in the raw text
+  const firstBrace   = raw.indexOf('{');
+  const firstBracket = raw.indexOf('[');
+  let start = -1;
+  let openChar: string, closeChar: string;
+
+  if (firstBrace === -1 && firstBracket === -1) return raw;
+  if (firstBrace === -1)  { start = firstBracket; openChar = '['; closeChar = ']'; }
+  else if (firstBracket === -1) { start = firstBrace; openChar = '{'; closeChar = '}'; }
+  else if (firstBrace < firstBracket) { start = firstBrace; openChar = '{'; closeChar = '}'; }
+  else { start = firstBracket; openChar = '['; closeChar = ']'; }
+
+  // Walk forward counting brackets to find the matching close
+  let depth = 0;
+  for (let i = start; i < raw.length; i++) {
+    if (raw[i] === openChar) depth++;
+    else if (raw[i] === closeChar) {
+      depth--;
+      if (depth === 0) return raw.slice(start, i + 1);
+    }
+  }
+
+  // 3. No balanced close found — take everything from start (truncated response)
+  return raw.slice(start);
+}
+
 const envApiKey = process.env.ANTHROPIC_API_KEY;
 console.log('[boot] ANTHROPIC_API_KEY:', envApiKey ? `set (${envApiKey.slice(0,12)}...)` : 'MISSING');
 
@@ -210,12 +247,9 @@ Be exhaustive — include every document mentioned. Use status "mandatory" for a
 
     const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
 
-    // Strip markdown code fences if present
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-
     let parsed: unknown;
     try {
-      parsed = JSON.parse(jsonStr);
+      parsed = JSON.parse(extractJson(raw));
     } catch {
       send({ type: 'error', message: 'Failed to parse checklist JSON. Raw: ' + raw.slice(0, 200) });
       res.end();
@@ -285,7 +319,7 @@ Score 0-100 for each dimension. Compute composite as weighted sum.`;
     });
 
     const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const jsonStr = extractJson(raw);
 
     let parsed: unknown;
     try { parsed = JSON.parse(jsonStr); }
@@ -354,7 +388,7 @@ Return raw JSON only (no markdown):
     });
 
     const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const jsonStr = extractJson(raw);
 
     let parsed: unknown;
     try { parsed = JSON.parse(jsonStr); }
@@ -371,9 +405,10 @@ Return raw JSON only (no markdown):
 });
 
 app.post('/api/generate-documents', async (req, res) => {
-  const { requirements, matches, legislation, state, apiKey: bodyApiKey, model: bodyModel } = req.body as {
+  const { requirements, matches, serffContext, legislation, state, apiKey: bodyApiKey, model: bodyModel } = req.body as {
     requirements: Array<{ id: number; name: string; description: string }>;
     matches: Array<{ name: string; status: string; section: string }>;
+    serffContext: string;
     legislation: string;
     state: string;
     apiKey?: string;
@@ -392,22 +427,29 @@ app.post('/api/generate-documents', async (req, res) => {
   try {
     send({ type: 'status', message: `Agent analyzing ${requirements.length} requirements...` });
 
+    const hasSerff = serffContext && serffContext.trim().length > 0;
     const prompt = `You are a filing document agent for ${state} captive insurance.
 
 REQUIREMENTS (${requirements.length}):
 ${requirements.map(r => `${r.id}. ${r.name} — ${r.description}`).join('\n')}
 
-MATCH RESULTS:
-${(matches || []).map(m => `${m.name}: ${m.status} — ${m.section}`).join('\n')}
+MATCH RESULTS FROM SERFF REFERENCE DOCS:
+${(matches || []).map(m => `• ${m.name}: ${m.status.toUpperCase()} (${m.section})`).join('\n')}
 
-LEGISLATION EXCERPT:
-${(legislation || '').slice(0, 4000)}
+${hasSerff ? `SERFF REFERENCE LIBRARY (AI-identified content):
+${serffContext.slice(0, 3000)}
 
-For each requirement, decide:
-- "adopted": reference section covers it fully, use as-is
-- "adapted": reference exists but needs state-specific changes
-- "generated": no reference, generate from legislation
-- "skipped": requirement is N/A for this entity structure
+` : ''}LEGISLATION EXCERPT (${state}):
+${(legislation || '').slice(0, 2500)}
+
+INSTRUCTIONS:
+For each requirement decide the action based on MATCH RESULTS and SERFF LIBRARY:
+- "adopted"  → match=covered AND serff doc explicitly covers this requirement → copy structure/language directly
+- "adapted"  → match=partial OR serff doc covers it partially → take serff language, adapt for ${state}-specific rules
+- "generated"→ match=gap OR no serff reference → draft from scratch using legislation
+- "skipped"  → requirement clearly N/A for this entity type
+
+For "adopted" and "adapted" items, reference which SERFF document is the source in the note.
 
 Return raw JSON only (no markdown):
 {
@@ -415,7 +457,7 @@ Return raw JSON only (no markdown):
     {
       "name": "requirement name",
       "action": "adopted|adapted|generated|skipped",
-      "note": "1-sentence description of what the agent did",
+      "note": "1-sentence: what was done and which SERFF doc was the source (if applicable)",
       "output": "SEIC_DocumentName.docx or — if skipped"
     }
   ]
@@ -430,7 +472,7 @@ Return raw JSON only (no markdown):
     });
 
     const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const jsonStr = extractJson(raw);
 
     let parsed: unknown;
     try { parsed = JSON.parse(jsonStr); }
@@ -473,7 +515,7 @@ Return raw JSON only — no markdown, no explanation:
     });
 
     const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const jsonStr = extractJson(raw);
     const parsed = JSON.parse(jsonStr) as { terms: string[] };
     res.json(parsed);
   } catch (err: unknown) {
@@ -518,6 +560,114 @@ Format as clean Markdown. Be thorough and realistic — this is a real filing do
     const content = (response.content[0] as Anthropic.TextBlock).text;
     const filename = name.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_') + '.md';
     res.json({ content, filename });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
+// ── /api/identify-serff-doc ──────────────────────────────────────────────────
+// Reads uploaded SERFF document content and identifies:
+//   - what document type it is
+//   - which checklist requirements it covers
+//   - key fields found
+//   - confidence level
+app.post('/api/identify-serff-doc', async (req, res) => {
+  const {
+    fileName, fileType, fileContent, isBase64,
+    checklist,
+    apiKey: bodyApiKey, model: bodyModel
+  } = req.body as {
+    fileName: string;
+    fileType: string;       // 'application/pdf' | 'text/plain' | 'text/xml' | etc.
+    fileContent: string;    // base64 string for binary, raw text for text files
+    isBase64: boolean;
+    checklist?: Array<{ id: string; name: string }>;
+    apiKey?: string;
+    model?: string;
+  };
+
+  if (!fileName || !fileContent) {
+    return res.status(400).json({ error: 'fileName and fileContent are required' });
+  }
+
+  try {
+    const client = _getClient(bodyApiKey);
+    const model  = _getModel(bodyModel);
+
+    const checklistContext = checklist && checklist.length
+      ? `\n\nCURRENT FILING CHECKLIST (match against these):\n${checklist.map((c, i) => `${i + 1}. ${c.name}`).join('\n')}`
+      : '';
+
+    const systemPrompt = `You are a captive insurance filing specialist with deep expertise in SERFF (System for Electronic Rate and Form Filing) documents.
+Analyze the provided document and return ONLY a valid JSON object — no markdown, no explanation.`;
+
+    const userPrompt = `Analyze this document and identify:
+1. What type of regulatory/filing document it is
+2. Which requirements from the checklist it covers
+3. Key fields/sections found
+4. A confidence rating
+
+${checklistContext}
+
+Return ONLY this JSON structure:
+{
+  "documentType": "string — the identified document type (e.g., 'Business Plan', 'Articles of Incorporation')",
+  "confidence": "high | medium | low",
+  "summary": "1-2 sentence description of what this document is and its purpose",
+  "coveredRequirements": ["array of checklist requirement names this document satisfies"],
+  "keyFields": ["array of key fields/sections found in the document"],
+  "gaps": ["array of important fields that appear missing or incomplete"],
+  "filingReady": true or false
+}`;
+
+    let messageContent: Anthropic.MessageParam['content'];
+
+    // Use native PDF support for PDFs, plain text for everything else
+    const isPdf = fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+    if (isPdf && isBase64) {
+      messageContent = [
+        {
+          type: 'document' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: 'application/pdf' as const,
+            data: fileContent,
+          },
+        },
+        { type: 'text' as const, text: userPrompt },
+      ];
+    } else {
+      // For text/XML/DOCX — use text content
+      const textContent = isBase64
+        ? Buffer.from(fileContent, 'base64').toString('utf8').slice(0, 15000)
+        : fileContent.slice(0, 15000);
+      messageContent = `${userPrompt}\n\nDOCUMENT CONTENT:\n${textContent}`;
+    }
+
+    // PDFs use the beta PDF endpoint; all other files use standard messages
+    const response = isPdf && isBase64
+      ? await (client.beta as any).messages.create({
+          model, max_tokens: 1024, system: systemPrompt,
+          messages: [{ role: 'user', content: messageContent }],
+          betas: ['pdfs-2024-09-25'],
+        })
+      : await client.messages.create({
+          model, max_tokens: 1024, system: systemPrompt,
+          messages: [{ role: 'user', content: messageContent }],
+        });
+
+    const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
+    let clean = extractJson(raw);
+    // Fallback: extract first { ... } block
+    if (!clean.startsWith('{')) {
+      const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+      if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
+    }
+    const result = JSON.parse(clean);
+    res.json(result);
+
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     res.status(500).json({ error: message });
