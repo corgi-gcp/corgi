@@ -1,17 +1,46 @@
-# ZIP archives (extracted folder is included instead)
-*.zip
+# Dependencies
+audit-tool/node_modules/
 
-# Word temporary files
+# Environment / secrets
+audit-tool/.env
+
+# IDE / Claude Code
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Word temp files
 ~$*
+
+# Archives
+*.zip
 
 # Temp files
 *.tmp
 *.temp
 
-# OS files
-.DS_Store
-Thumbs.db
-audit-tool/node_modules/
+# ── Local-only working files (not needed to run the tool) ────────────────────
+data.json
+PROJECT_CONTEXT.md
+SERFF_FILINGS_INDEX.md
+"Captive Checklist Dev.xlsx"
 
-audit-tool/.env
-.claude/
+# Uploaded client documents
+Consultants - Filing Documents - Sports-20260317T133938Z-3-001/
+
+# SERFF sample filings (uploaded by user at runtime, not part of source)
+SERFF_Filings/
+
+# Generated skills output (produced by Step 5, not source templates)
+skills/
+
+# Unused audit-tool source modules (only legislation-server.ts is used)
+audit-tool/src/checks/
+audit-tool/src/extractor/
+audit-tool/src/report/
+audit-tool/src/index.ts
+audit-tool/src/loader.ts
+audit-tool/src/types.ts
+audit-tool/src/utils.ts
