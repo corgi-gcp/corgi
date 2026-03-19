@@ -1,0 +1,4812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Requirements Flow</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e1a;
+    color: #c8cdd8;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 48px 64px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .page-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #e8ecf4;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #5a6a7a;
+    margin-bottom: 48px;
+  }
+
+  /* ── Pipeline connector ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  .connector {
+    width: 1px;
+    height: 36px;
+    background: linear-gradient(180deg, #2a3040, #3a4558);
+  }
+
+  /* ── Step card ── */
+  .step-card {
+    width: 100%;
+    background: linear-gradient(135deg, #111827 0%, #0f1525 100%);
+    border: 1px solid #1e2738;
+    border-radius: 12px;
+    padding: 24px 28px;
+    position: relative;
+  }
+
+  .step-card:hover {
+    border-color: #2a3a50;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .step-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .step-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    background: #1a2236;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: #7aa2f7;
+  }
+
+  .step-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e8ecf4;
+  }
+
+  .step-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    border: 1px solid #2a3040;
+    border-radius: 4px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  .step-desc {
+    margin-top: 8px;
+    margin-left: 52px;
+    font-size: 13px;
+    color: #5a6a7a;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #3a4558;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  /* ── Three-column row ── */
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .option-card {
+    background: linear-gradient(135deg, #111827 0%, #0f1525 100%);
+    border: 1px solid #1e2738;
+    border-radius: 12px;
+    padding: 22px 20px;
+    position: relative;
+  }
+
+  .option-card:hover {
+    border-color: #2a3a50;
+  }
+
+  .option-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .option-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #7aa2f7;
+  }
+
+  .option-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .option-title.green { color: #4ade80; }
+  .option-title.amber { color: #fbbf24; }
+  .option-title.purple { color: #c084fc; }
+
+  .option-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    border: 1px solid #2a3040;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-left: auto;
+  }
+
+  .option-desc {
+    font-size: 12.5px;
+    color: #5a6a7a;
+    line-height: 1.6;
+  }
+
+  /* ── Sub-module (quality scorer) ── */
+  .submodule-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    text-align: center;
+    padding: 12px 0 4px;
+  }
+
+  .submodule-label span {
+    color: #c8cdd8;
+    font-weight: 500;
+  }
+
+  .scorer-card {
+    width: 100%;
+    background: linear-gradient(135deg, #111827 0%, #0f1525 100%);
+    border: 1px solid #1e2738;
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .scorer-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr 280px;
+    gap: 32px;
+  }
+
+  /* Hard gates */
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    margin-bottom: 16px;
+  }
+
+  .gate-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #0d1220;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .gate-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .gate-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    flex-shrink: 0;
+  }
+
+  .gate-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4ade80;
+  }
+
+  .gate-value {
+    font-size: 11px;
+    color: #f97316;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Scoring dimensions */
+  .dimension {
+    margin-bottom: 18px;
+  }
+
+  .dimension-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .dimension-name {
+    font-size: 13px;
+    color: #c8cdd8;
+  }
+
+  .dimension-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .dimension-weight {
+    font-size: 11px;
+    color: #5a6a7a;
+  }
+
+  .dimension-score {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8ecf4;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .slider-track {
+    width: 100%;
+    height: 3px;
+    background: #1e2738;
+    border-radius: 2px;
+    position: relative;
+    margin-top: 4px;
+  }
+
+  .slider-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 2px;
+  }
+
+  .slider-thumb {
+    width: 12px;
+    height: 12px;
+    background: #e8ecf4;
+    border: 2px solid #3b82f6;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Tier panel */
+  .tier-panel {
+    background: #0d1220;
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+
+  .tier-label-box {
+    display: inline-block;
+    border: 1px solid #f59e0b;
+    border-radius: 4px;
+    padding: 3px 12px;
+    margin-bottom: 14px;
+  }
+
+  .tier-label-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f59e0b;
+  }
+
+  .tier-score {
+    font-size: 48px;
+    font-weight: 700;
+    color: #e8ecf4;
+    line-height: 1;
+  }
+
+  .tier-score span {
+    font-size: 20px;
+    font-weight: 400;
+    color: #5a6a7a;
+  }
+
+  .tier-score-label {
+    font-size: 11px;
+    color: #5a6a7a;
+    margin-bottom: 8px;
+  }
+
+  .tier-bar {
+    width: 100%;
+    height: 4px;
+    background: #1e2738;
+    border-radius: 2px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+
+  .tier-bar-fill {
+    height: 100%;
+    width: 65%;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    border-radius: 2px;
+  }
+
+  .tier-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .tier-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+
+  .tier-row-name { color: #5a6a7a; }
+  .tier-row-val {
+    font-family: 'JetBrains Mono', monospace;
+    color: #c8cdd8;
+  }
+
+  .tier-row.total {
+    border-top: 1px solid #1e2738;
+    padding-top: 6px;
+    margin-top: 4px;
+  }
+
+  .tier-row.total .tier-row-name,
+  .tier-row.total .tier-row-val {
+    font-weight: 600;
+    color: #e8ecf4;
+  }
+
+  .tier-note {
+    font-size: 11px;
+    color: #5a6a7a;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* ── Step 01 interactive panel ── */
+  .step-card.expandable { cursor: default; }
+
+  .step-expand-btn {
+    background: #1a2236;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #7aa2f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .step-expand-btn:hover { background: #223050; border-color: #4a6a90; }
+
+  .step-panel {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #1e2738;
+    display: none;
+  }
+  .step-panel.open { display: block; }
+
+  .panel-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 16px;
+  }
+
+  .panel-field label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    margin-bottom: 6px;
+  }
+
+  .panel-field select,
+  .panel-field input {
+    width: 100%;
+    background: #0d1220;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #c8cdd8;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .panel-field select:focus,
+  .panel-field input:focus { border-color: #7aa2f7; }
+  .panel-field select option { background: #0d1220; }
+
+  .run-btn {
+    background: #1a3a6a;
+    border: 1px solid #3a6aaa;
+    border-radius: 6px;
+    color: #7aa2f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .run-btn:hover:not(:disabled) { background: #1e4a8a; }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .mock-btn {
+    background: transparent;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .mock-btn:hover { color: #f59e0b; border-color: #f59e0b44; }
+
+  .research-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    margin-bottom: 10px;
+    min-height: 16px;
+  }
+
+  .research-status.active { color: #7aa2f7; }
+  .research-status.error { color: #f87171; }
+
+  .research-result {
+    background: #080d18;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #c8cdd8;
+    max-height: 480px;
+    overflow-y: auto;
+    display: none;
+  }
+  .research-result.visible { display: block; }
+
+  /* ── SERFF search terms ── */
+  .serff-terms-row {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: #080d18;
+    border: 1px solid #1a2f4a;
+    border-radius: 8px;
+    display: none;
+  }
+  .serff-terms-row.visible { display: block; }
+  .serff-terms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .serff-terms-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #4a8aba;
+    text-transform: uppercase;
+  }
+  .terms-copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    background: transparent;
+    border: 1px solid #2a4a6a;
+    border-radius: 4px;
+    color: #4a8aba;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .15s;
+  }
+  .terms-copy-btn:hover { background: #1a2f4a; color: #7aa2f7; }
+  .terms-copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+  .serff-terms-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .term-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 11px;
+    background: #0f1e30;
+    border: 1px solid #1e3a55;
+    border-radius: 20px;
+    color: #7aa2f7;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .term-chip:hover { background: #1a2f4a; border-color: #4a7aa0; }
+  .term-chip.copied { border-color: #4ade80; color: #4ade80; }
+
+  .research-result h1,
+  .research-result h2 { color: #e8ecf4; margin: 16px 0 8px; font-size: 14px; }
+  .research-result h3 { color: #7aa2f7; margin: 12px 0 6px; font-size: 13px; }
+  .research-result h1:first-child,
+  .research-result h2:first-child { margin-top: 0; }
+  .research-result p { margin-bottom: 10px; }
+  .research-result ul, .research-result ol { padding-left: 20px; margin-bottom: 10px; }
+  .research-result li { margin-bottom: 4px; }
+  .research-result strong { color: #e8ecf4; }
+  .research-result code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: #1a2236;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #7aa2f7;
+  }
+
+  /* ── Step 02 checklist panel ── */
+  .checklist-hint {
+    font-size: 12px;
+    color: #4a6a8a;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .checklist-hint.ready { color: #4ade80; }
+
+  .checklist-textarea {
+    width: 100%;
+    background: #0d1220;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #8a9ab0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 12px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .checklist-textarea:focus { border-color: #7aa2f7; }
+
+  .checklist-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .checklist-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    min-height: 16px;
+    margin-bottom: 12px;
+  }
+  .checklist-status.active { color: #7aa2f7; }
+  .checklist-status.error  { color: #f87171; }
+
+  /* Summary bar */
+  .checklist-summary {
+    display: none;
+    background: #0d1220;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #c8cdd8;
+    line-height: 1.6;
+  }
+  .checklist-summary.visible { display: block; }
+  .checklist-summary .stat-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .stat-pill.mandatory { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .stat-pill.conditional { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .stat-pill.optional { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+
+  /* Checklist table */
+  .checklist-table-wrap {
+    display: none;
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #1e2738;
+  }
+  .checklist-table-wrap.visible { display: block; }
+
+  .checklist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .checklist-table th {
+    background: #0a0f1c;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #1e2738;
+    white-space: nowrap;
+  }
+  .checklist-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #131c2e;
+    vertical-align: top;
+    color: #c8cdd8;
+    line-height: 1.5;
+  }
+  .checklist-table tr:last-child td { border-bottom: none; }
+  .checklist-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .doc-name { font-weight: 600; color: #e8ecf4; margin-bottom: 2px; }
+  .doc-desc { font-size: 11.5px; color: #6a7a8a; }
+  .doc-condition { font-size: 11px; color: #d97706; font-style: italic; margin-top: 3px; }
+
+  .status-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .status-badge.mandatory  { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .status-badge.conditional { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .status-badge.optional   { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+
+  .cat-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #5a6a7a;
+    background: #111827;
+    border: 1px solid #1e2738;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .citation-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #4a6a8a;
+  }
+
+  /* ── Attach card ── */
+  .attach-card {
+    width: 100%;
+    background: linear-gradient(135deg, #111827 0%, #0f1525 100%);
+    border: 1px solid #1e2738;
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+
+  .attach-card .step-header-left {
+    gap: 12px;
+  }
+
+  .attach-icon {
+    color: #5a6a7a;
+    font-size: 16px;
+  }
+
+  .attach-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e8ecf4;
+  }
+
+  .attach-desc {
+    margin-top: 6px;
+    margin-left: 30px;
+    font-size: 13px;
+    color: #5a6a7a;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #5a6a7a;
+  }
+
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-research { background: #4ade80; }
+  .dot-extraction { background: #4ade80; }
+  .dot-serff-manual { background: #f59e0b; }
+  .dot-serff-agent { background: #ef4444; }
+  .dot-manual-input { background: #06b6d4; }
+  .dot-quality { background: #8b5cf6; }
+  .dot-matching { background: #ef4444; }
+  .dot-generation { background: #818cf8; }
+  .dot-integration { background: #4ade80; }
+
+  /* ── SERFF Document Repository (2D) ── */
+  .repo-section {
+    width: 100%;
+    background: linear-gradient(135deg, #0d1422 0%, #0b1020 100%);
+    border: 1px solid #1a2a40;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 12px;
+  }
+  .repo-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .repo-header-left { display: flex; align-items: center; gap: 12px; }
+  .repo-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .repo-search {
+    background: #080d18;
+    border: 1px solid #1e2f45;
+    border-radius: 6px;
+    color: #e8ecf4;
+    font-size: 12px;
+    padding: 7px 12px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .repo-search:focus { border-color: #7aa2f7; }
+  .repo-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .repo-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid #1e2f45;
+    background: transparent;
+    color: #5a6a7a;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .repo-tab:hover { color: #7aa2f7; border-color: #7aa2f7; }
+  .repo-tab.active { background: #1a2f50; border-color: #7aa2f7; color: #7aa2f7; }
+  .repo-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 12px;
+  }
+  .repo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    background: #080e1a;
+    border: 1px solid #1a2538;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .repo-item:hover { border-color: #2a3f60; background: #0c1525; }
+  .repo-item.selected { border-color: #4a8aba; background: #0a1a2a; }
+  .repo-item.selected .repo-item-name { color: #7aa2f7; }
+  .repo-item.hidden { display: none; }
+  .repo-cb {
+    width: 14px; height: 14px; min-width: 14px;
+    border: 1px solid #2a3f60;
+    border-radius: 3px;
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+    font-size: 9px;
+    color: #7aa2f7;
+    transition: all .15s;
+  }
+  .repo-item.selected .repo-cb { background: #1a3a5a; border-color: #7aa2f7; }
+  .repo-item-info { flex: 1; min-width: 0; }
+  .repo-item-name { font-size: 12px; font-weight: 600; color: #c8cdd8; margin-bottom: 2px; }
+  .repo-item-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #3a5a7a;
+    text-transform: uppercase;
+  }
+  .repo-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #141f30;
+    margin-bottom: 12px;
+  }
+  .repo-selected-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #4a8aba;
+  }
+  /* Match results */
+  .repo-match-wrap {
+    margin-top: 14px;
+    display: none;
+  }
+  .repo-match-wrap.visible { display: block; }
+  .repo-match-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #4a8aba;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .repo-match-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .repo-match-table th {
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #3a5a7a;
+    padding: 6px 10px;
+    border-bottom: 1px solid #1a2538;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+  .repo-match-table td { padding: 7px 10px; border-bottom: 1px solid #0f1820; vertical-align: middle; }
+  .repo-match-table tr:last-child td { border-bottom: none; }
+  .match-cover-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .match-cover-badge.found { background: rgba(74,222,128,.1); color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
+  .match-cover-badge.partial { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.3); }
+  .match-cover-badge.missing { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
+  .repo-match-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: #080d18;
+    border-radius: 7px;
+    border: 1px solid #1a2538;
+  }
+  .repo-ms-item { text-align: center; }
+  .repo-ms-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+  .repo-ms-lbl { font-size: 10px; color: #5a6a7a; letter-spacing: 1px; }
+  .repo-ms-num.found { color: #4ade80; }
+  .repo-ms-num.partial { color: #fbbf24; }
+  .repo-ms-num.missing { color: #f87171; }
+
+  /* ── SERFF Document Library (Step 2) ── */
+  .lib-upload-zone {
+    border: 2px dashed #2a3a55;
+    border-radius: 8px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: #080d18;
+    margin-bottom: 14px;
+  }
+  .lib-upload-zone:hover, .lib-upload-zone.dragover {
+    border-color: #7aa2f7;
+    background: #0a1428;
+  }
+  .lib-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .lib-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    letter-spacing: .5px;
+  }
+  .lib-toolbar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .lib-card {
+    background: #080d18;
+    border: 1px solid #1a2535;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color .2s;
+  }
+  .lib-card:hover { border-color: #2a3a55; }
+  .lib-card.selected { border-color: #4a7abf; background: #080f1e; }
+  .lib-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .lib-card-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .type-pdf  { background: #3a1a1a; color: #f87171; }
+  .type-xml  { background: #1a2a1a; color: #4ade80; }
+  .type-docx { background: #1a1a3a; color: #a78bfa; }
+  .type-txt  { background: #1a2535; color: #7aa2f7; }
+  .type-ref  { background: #1a2535; color: #5a6a7a; }
+  .type-file { background: #1a2535; color: #5a6a7a; }
+  .lib-card-sel {
+    font-size: 16px;
+    cursor: pointer;
+    color: #5a6a7a;
+    line-height: 1;
+    user-select: none;
+  }
+  .lib-card.selected .lib-card-sel { color: #7aa2f7; }
+  .lib-card-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #c8cdd8;
+    word-break: break-all;
+    line-height: 1.35;
+    max-height: 2.7em;
+    overflow: hidden;
+  }
+  .lib-card-cat {
+    font-size: 10px;
+    color: #3a4a5a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .lib-card-score {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .lib-tier-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .tier-a { background: #1a3a20; color: #4ade80; }
+  .tier-b { background: #1a2a3a; color: #7aa2f7; }
+  .tier-c { background: #2a2a1a; color: #fbbf24; }
+  .tier-d { background: #2a1a1a; color: #f87171; }
+  .tier-f { background: #3a0a0a; color: #ef4444; }
+  .lib-score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #e8ecf4;
+  }
+  .lib-card-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .lib-card-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: .8px;
+    padding: 4px 8px;
+    border: 1px solid #2a3a55;
+    border-radius: 4px;
+    background: transparent;
+    color: #7aa2f7;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .lib-card-btn:hover { background: #1a2a40; border-color: #7aa2f7; }
+  .lib-card-btn:disabled { opacity: .4; cursor: default; }
+  .lib-card-btn.danger { color: #f87171; border-color: #3a1a1a; }
+  .lib-card-btn.danger:hover { background: #1a0a0a; border-color: #f87171; }
+
+  /* ── Step 3 option cards ── */
+  .option-card.active {
+    border-color: rgba(74, 222, 128, 0.4);
+    background: linear-gradient(135deg, #0f1e14 0%, #0d1a12 100%);
+  }
+
+  .option-card.done {
+    border-color: rgba(122, 162, 247, 0.4);
+  }
+
+  .option-panel {
+    display: none;
+    padding-top: 16px;
+    border-top: 1px solid #1e2738;
+    margin-top: 14px;
+  }
+  .option-panel.open { display: block; }
+
+  .upload-zone {
+    border: 1px dashed #2a3a50;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .upload-zone:hover {
+    border-color: rgba(74, 222, 128, 0.3);
+  }
+  .upload-zone.dragover {
+    border-color: rgba(74, 222, 128, 0.7);
+    background: rgba(74, 222, 128, 0.05);
+  }
+
+  .upload-icon {
+    font-size: 28px;
+    color: #3a4a60;
+    margin-bottom: 8px;
+  }
+
+  .upload-hint {
+    font-size: 12px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .upload-filename {
+    font-size: 12px;
+    color: #4ade80;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 6px;
+    display: none;
+  }
+  .upload-filename.visible { display: block; }
+
+  .opt-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    margin-bottom: 10px;
+    min-height: 16px;
+  }
+  .opt-status.active { color: #7aa2f7; }
+  .opt-status.error  { color: #f87171; }
+  .opt-status.done   { color: #4ade80; }
+
+  .manual-textarea {
+    width: 100%;
+    background: #0d1220;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #8a9ab0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 12px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .manual-textarea:focus { border-color: #7aa2f7; }
+
+  .option-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  /* ── Quality scorer — dynamic ── */
+  .scorer-card.idle {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .scorer-card.loading {
+    opacity: 0.7;
+  }
+  .scorer-card.loaded {
+    opacity: 1;
+    transition: opacity 0.4s;
+  }
+
+  .gate-dot.pass { background: #4ade80; }
+  .gate-dot.fail { background: #f87171; }
+
+  .gate-name.fail { color: #f87171; }
+
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: #e8ecf4;
+  }
+
+  .slider-fill { transition: width 0.6s ease; }
+  .slider-thumb { transition: left 0.6s ease; }
+
+  .scorer-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* ── Step 04 match engine ── */
+  .match-source-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .match-source-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #0d1220;
+    border: 1px solid #1e2738;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #5a6a7a;
+  }
+  .match-source-pill .pill-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #3a4a60;
+    margin-right: 2px;
+  }
+  .match-source-pill .pill-val {
+    color: #c8cdd8;
+    font-size: 12px;
+  }
+  .match-source-pill .pill-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .match-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    min-height: 16px;
+    margin-bottom: 12px;
+  }
+  .match-status.active { color: #7aa2f7; }
+  .match-status.error  { color: #f87171; }
+
+  .match-summary-bar {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    background: #0d1220;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .match-summary-bar.visible { display: flex; }
+
+  .match-coverage-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 64px;
+  }
+  .match-coverage-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #e8ecf4;
+    line-height: 1;
+  }
+  .match-coverage-lbl {
+    font-size: 10px;
+    color: #5a6a7a;
+    margin-top: 2px;
+  }
+  .match-divider {
+    width: 1px; height: 40px;
+    background: #1e2738;
+  }
+  .match-stat-group {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .match-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .match-stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .match-stat-num.covered  { color: #4ade80; }
+  .match-stat-num.partial  { color: #fbbf24; }
+  .match-stat-num.gap      { color: #f87171; }
+  .match-stat-lbl {
+    font-size: 10px;
+    color: #5a6a7a;
+    white-space: nowrap;
+  }
+
+  .match-table-wrap {
+    display: none;
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #1e2738;
+  }
+  .match-table-wrap.visible { display: block; }
+
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .match-table th {
+    background: #0a0f1c;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #1e2738;
+    white-space: nowrap;
+  }
+  .match-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #131c2e;
+    vertical-align: middle;
+    color: #c8cdd8;
+  }
+  .match-table tr:last-child td { border-bottom: none; }
+  .match-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .match-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .match-badge.covered  { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+  .match-badge.partial  { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .match-badge.gap      { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+
+  .sim-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+  }
+  .sim-bar-track {
+    flex: 1;
+    height: 3px;
+    background: #1e2738;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .sim-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .sim-bar-fill.covered { background: #4ade80; }
+  .sim-bar-fill.partial { background: #fbbf24; }
+  .sim-bar-fill.gap     { background: #f87171; }
+  .sim-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a7a;
+    min-width: 34px;
+    text-align: right;
+  }
+
+  .match-section-text {
+    font-size: 11.5px;
+    color: #6a7a8a;
+    max-width: 260px;
+  }
+
+  /* ── Step 05 agent ── */
+  .agent-log {
+    display: none;
+    background: #060b14;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.75;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+  }
+  .agent-log.visible { display: block; }
+  .log-ts { color: #2a3a50; margin-right: 8px; }
+  .log-status   { color: #7aa2f7; }
+  .log-adopted  { color: #4ade80; }
+  .log-adapted  { color: #fbbf24; }
+  .log-generated { color: #818cf8; }
+  .log-skipped  { color: #3a4a60; }
+  .log-done     { color: #4ade80; font-weight: 600; }
+
+  .agent-summary-bar {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    background: #0d1220;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .agent-summary-bar.visible { display: flex; }
+
+  .agent-stat-group {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .agent-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .agent-stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .agent-stat-num.adopted   { color: #4ade80; }
+  .agent-stat-num.adapted   { color: #fbbf24; }
+  .agent-stat-num.generated { color: #818cf8; }
+  .agent-stat-num.skipped   { color: #3a4a60; }
+  .agent-stat-lbl { font-size: 10px; color: #5a6a7a; white-space: nowrap; }
+
+  .pkg-btn {
+    background: #1a2236;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 18px;
+    cursor: not-allowed;
+    white-space: nowrap;
+    opacity: 0.6;
+  }
+  .pkg-btn.ready {
+    background: #1a3a6a;
+    border-color: #3a6aaa;
+    color: #7aa2f7;
+    cursor: pointer;
+    opacity: 1;
+  }
+
+  .agent-table-wrap {
+    display: none;
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #1e2738;
+  }
+  .agent-table-wrap.visible { display: block; }
+
+  .agent-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .agent-table th {
+    background: #0a0f1c;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #1e2738;
+    white-space: nowrap;
+  }
+  .agent-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #131c2e;
+    vertical-align: top;
+    color: #c8cdd8;
+    line-height: 1.5;
+  }
+  .agent-table tr:last-child td { border-bottom: none; }
+  .agent-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .action-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .action-badge.adopted   { background: rgba(74,222,128,0.12);  color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+  .action-badge.adapted   { background: rgba(251,191,36,0.12);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .action-badge.generated { background: rgba(129,140,248,0.12); color: #818cf8; border: 1px solid rgba(129,140,248,0.3); }
+  .action-badge.skipped   { background: rgba(90,106,122,0.12);  color: #5a6a7a; border: 1px solid rgba(90,106,122,0.25); }
+
+  .output-filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #7aa2f7;
+  }
+  .output-filename.na { color: #3a4a60; }
+  .agent-note-text {
+    font-size: 11.5px;
+    color: #6a7a8a;
+    max-width: 280px;
+  }
+
+  /* ── Session save pills ── */
+  .save-pill {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #4ade80;
+    margin-left: 8px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .save-pill.visible { display: inline; }
+  .save-pill .save-ts { color: #3a5a40; font-size: 9px; margin-left: 4px; }
+
+  /* ── Clear session button ── */
+  .clear-session-btn {
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .clear-session-btn:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+  .page-header-row { display: flex; align-items: flex-start; justify-content: space-between; }
+
+  /* ── Skip buttons ── */
+  .skip-btn {
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .skip-btn:hover { color: #f59e0b; border-color: rgba(245,158,11,0.4); }
+  .skip-btn.skipped { color: #f59e0b; border-color: rgba(245,158,11,0.35); }
+  .section-label-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0;
+  }
+  .section-label-row .section-label { margin: 0; }
+  .skipped-notice {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #f59e0b;
+    padding: 10px 0 4px 0;
+  }
+  .skipped-notice.visible { display: block; }
+
+  /* ── Add / Remove rows ── */
+  .row-rm-btn {
+    background: transparent;
+    border: 1px solid #2a3a50;
+    border-radius: 4px;
+    color: #f87171;
+    font-size: 10px;
+    padding: 2px 7px;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: all .15s;
+  }
+  .row-rm-btn:hover { opacity: 1; background: #2a1515; border-color: #f87171; }
+
+  .add-doc-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 7px 16px;
+    margin-top: 8px;
+    background: transparent;
+    border: 1px dashed #252f42;
+    border-radius: 6px;
+    color: #3a5a7a;
+    cursor: pointer;
+    width: 100%;
+    transition: all .15s;
+    display: none;
+  }
+  .add-doc-btn.visible { display: block; }
+  .add-doc-btn:hover { border-color: #7aa2f7; color: #7aa2f7; background: #0a1020; }
+
+  .add-row td { padding: 5px 8px !important; background: #0b1220 !important; }
+  .add-input-field {
+    background: #0a0e1a;
+    border: 1px solid #2a3a50;
+    border-radius: 4px;
+    color: #e8ecf4;
+    font-size: 12px;
+    padding: 4px 8px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .add-input-field:focus { border-color: #7aa2f7; }
+  .add-select-field {
+    background: #0a0e1a;
+    border: 1px solid #2a3a50;
+    border-radius: 4px;
+    color: #c8cdd8;
+    font-size: 11px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  .confirm-add-btn {
+    background: #0f2a1a;
+    border: 1px solid #4ade80;
+    border-radius: 4px;
+    color: #4ade80;
+    font-size: 10px;
+    padding: 3px 10px;
+    cursor: pointer;
+    margin-right: 4px;
+  }
+  .confirm-add-btn:hover { background: #1a3a2a; }
+  .cancel-add-btn {
+    background: transparent;
+    border: 1px solid #3a4a5a;
+    border-radius: 4px;
+    color: #5a6a7a;
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  .cancel-add-btn:hover { color: #f87171; border-color: #f87171; }
+
+  /* ── Download buttons (Step 5) ── */
+  .dl-btn {
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 5px;
+    color: #7aa2f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .dl-btn:hover { color: #4ade80; border-color: rgba(74,222,128,0.4); }
+  .dl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .dl-btn.done { color: #4ade80; border-color: rgba(74,222,128,0.35); }
+  .dl-all-btn {
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: 6px;
+    color: #4ade80;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .dl-all-btn:hover { background: rgba(74,222,128,0.15); }
+
+  /* ── Change 1: Settings modal ── */
+  .gear-btn {
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-size: 14px;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+  }
+  .gear-btn:hover { color: #7aa2f7; border-color: #7aa2f7; }
+  .export-btn {
+    background: rgba(122,162,247,0.08);
+    border: 1px solid rgba(122,162,247,0.25);
+    border-radius: 6px;
+    color: #7aa2f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .export-btn:hover { background: rgba(122,162,247,0.15); }
+  .modal-overlay {
+    display: none;
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #111827;
+    border: 1px solid #2a3a50;
+    border-radius: 12px;
+    padding: 28px 32px;
+    min-width: 380px;
+    max-width: 480px;
+    width: 100%;
+  }
+  .modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e8ecf4;
+    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a6a7a;
+    margin-bottom: 6px;
+  }
+  .modal-field input,
+  .modal-field select {
+    width: 100%;
+    background: #0d1220;
+    border: 1px solid #2a3a50;
+    border-radius: 6px;
+    color: #c8cdd8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .modal-field input:focus,
+  .modal-field select:focus { border-color: #7aa2f7; }
+  .modal-field select option { background: #0d1220; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .modal-save-btn {
+    background: #1a3a6a;
+    border: 1px solid #3a6aaa;
+    border-radius: 6px;
+    color: #7aa2f7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 20px;
+    cursor: pointer;
+  }
+  .modal-save-btn:hover { background: #1e4a8a; }
+  .modal-cancel-btn {
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  .modal-cancel-btn:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+
+  /* ── Change 2: Offline banner ── */
+  #offlineBanner {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #7c2020;
+    border-bottom: 1px solid #f87171;
+    color: #fca5a5;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    text-align: center;
+    z-index: 999;
+  }
+  #offlineBanner.visible { display: block; }
+  body.has-offline-banner { padding-top: 86px; }
+
+  /* ── Change 3: Session restored pill ── */
+  #sessionRestoredPill {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #4ade80;
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  #sessionRestoredPill.visible { display: inline-block; }
+
+  /* ── Change 4: Step locks ── */
+  .step-lock-icon {
+    font-size: 14px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .run-btn.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ── Change 5: Score all progress bar ── */
+  #scoreAllProgress {
+    display: none;
+    margin-bottom: 12px;
+    background: #0a0f1a;
+    border: 1px solid #1e2738;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  #scoreAllProgress.visible { display: block; }
+  .score-progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #7aa2f7;
+    margin-bottom: 6px;
+  }
+  .score-progress-track {
+    width: 100%;
+    height: 4px;
+    background: #1e2738;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  /* ── Change 6: Lib tier filter tabs ── */
+  .lib-tier-tabs {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .lib-tier-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #1e2f45;
+    background: transparent;
+    color: #5a6a7a;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .lib-tier-tab:hover { color: #7aa2f7; border-color: #7aa2f7; }
+  .lib-tier-tab.active { background: #1a2f50; border-color: #7aa2f7; color: #7aa2f7; }
+
+  /* ── Change 7: Duplicate warning ── */
+  .dup-warning {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #f59e0b;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* ── Change 8: Priority selects in checklist ── */
+  .priority-select {
+    background: #0a0e1a;
+    border: 1px solid #2a3040;
+    border-radius: 4px;
+    color: #5a6a7a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 5px;
+    cursor: pointer;
+    outline: none;
+    width: 90px;
+  }
+  .priority-select.prio-blocking { color: #f87171; border-color: rgba(248,113,113,0.4); }
+  .priority-select.prio-high     { color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+  .priority-select.prio-nice     { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+  .priority-select.prio-none     { color: #3a4a5a; }
+</style>
+</head>
+<body>
+
+<!-- Change 2: Offline banner -->
+<div id="offlineBanner">⚠ Server offline — start the server to use live features</div>
+
+<!-- Change 1: Settings modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-title">⚙ SETTINGS</div>
+    <div class="modal-field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="settingsApiKey" placeholder="sk-ant-..." autocomplete="off" />
+    </div>
+    <div class="modal-field">
+      <label>Model</label>
+      <select id="settingsModel">
+        <option value="claude-haiku-4-5">claude-haiku-4-5 (default, fast)</option>
+        <option value="claude-sonnet-4-5">claude-sonnet-4-5 (balanced)</option>
+        <option value="claude-opus-4-5">claude-opus-4-5 (most capable)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" onclick="document.getElementById('settingsModal').classList.remove('open')">CANCEL</button>
+      <button class="modal-save-btn" onclick="saveSettings()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-header-row">
+  <div>
+    <div class="page-label">Captive Insurance Filing Tool &middot; Multi-State Module</div>
+    <h1>Document Requirements Flow <span id="sessionRestoredPill">SESSION RESTORED</span></h1>
+    <p class="subtitle">State-agnostic pipeline for identifying, sourcing, and matching regulatory filings</p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <button class="export-btn" onclick="exportReport()">EXPORT REPORT ⬇</button>
+    <button class="gear-btn" title="Settings" onclick="openSettings()">⚙</button>
+    <button class="clear-session-btn" onclick="clearSession()">CLEAR SESSION</button>
+  </div>
+</div>
+
+<div class="pipeline">
+
+  <!-- Step 01 -->
+  <div class="step-card expandable">
+    <div class="step-header">
+      <div class="step-header-left">
+        <div class="step-number">01</div>
+        <div class="step-title">Legislation research</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="step-badge">Web Search Agent<span class="save-pill" id="savePill1"></span></div>
+        <button class="step-expand-btn" id="expandBtn" onclick="togglePanel()">RUN &rsaquo;</button>
+      </div>
+    </div>
+    <div class="step-desc">State selector + case type input (e.g. captive insurance in sports) &rarr; fetch current statutes from state DOI and NAIC sources</div>
+
+    <div class="step-panel" id="researchPanel">
+      <div class="panel-form">
+        <div class="panel-field">
+          <label>State</label>
+          <select id="stateSelect"><option value="">Loading...</option></select>
+        </div>
+        <div class="panel-field">
+          <label>Case Type / Business Context</label>
+          <input type="text" id="caseTypeInput" placeholder="e.g. captive insurance in sports" value="captive insurance in sports" />
+        </div>
+        <button class="run-btn" id="runBtn" onclick="runResearch()">SEARCH</button>
+        <button class="mock-btn" onclick="runMockStep1()">MOCK ▸</button>
+      </div>
+      <!-- Change 10: Additional state selectors -->
+      <div id="additionalStatesRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <div id="addStateSlot1" style="display:none;">
+          <select id="stateSelect2" style="background:#0d1220;border:1px solid #2a3a50;border-radius:6px;color:#c8cdd8;font-size:13px;padding:7px 12px;outline:none;"><option value="">2nd state (optional)</option></select>
+          <button onclick="removeExtraState(2)" style="background:transparent;border:none;color:#f87171;cursor:pointer;font-size:12px;padding:2px 6px;">✕</button>
+        </div>
+        <div id="addStateSlot2" style="display:none;">
+          <select id="stateSelect3" style="background:#0d1220;border:1px solid #2a3a50;border-radius:6px;color:#c8cdd8;font-size:13px;padding:7px 12px;outline:none;"><option value="">3rd state (optional)</option></select>
+          <button onclick="removeExtraState(3)" style="background:transparent;border:none;color:#f87171;cursor:pointer;font-size:12px;padding:2px 6px;">✕</button>
+        </div>
+        <button id="addStateBtn" class="mock-btn" onclick="addExtraState()" style="font-size:10px;padding:6px 12px;">+ ADD STATE</button>
+      </div>
+      <div class="research-status" id="researchStatus"></div>
+      <div class="research-result" id="researchResult"></div>
+      <div class="serff-terms-row" id="serffTermsRow">
+        <div class="serff-terms-header">
+          <span class="serff-terms-label">⬡ SERFF Search Terms</span>
+          <button class="terms-copy-btn" id="termsCopyAllBtn" onclick="copyAllTerms()">COPY ALL</button>
+        </div>
+        <div class="serff-terms-chips" id="serffTermsChips"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Section label -->
+  <div class="section-label-row">
+    <div class="section-label">STEP 02 &mdash; SERFF DOCUMENT SOURCE</div>
+    <button class="skip-btn" id="skipBtn2" onclick="skipStep2()">SKIP THIS STEP ›</button>
+  </div>
+  <div class="skipped-notice" id="skippedNotice2">⚠ Step 02 skipped — matching engine will run without SERFF document scoring.</div>
+
+  <div class="connector" style="height: 18px;"></div>
+
+  <!-- SERFF Document Library -->
+  <div class="repo-section" id="repoSection">
+
+    <!-- Upload zone -->
+    <div class="lib-upload-zone" id="libUploadZone"
+         onclick="document.getElementById('libFileInput').click()"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleLibDrop(event)">
+      <div style="font-size:22px;margin-bottom:6px;">⬆</div>
+      <div style="font-weight:600;color:#c8cdd8;font-size:13px;">Drop SERFF documents here or click to browse</div>
+      <div style="font-size:11px;color:#5a6a7a;margin-top:4px;">PDF · XML · DOCX — multiple files at once · stored locally for re-download</div>
+      <input type="file" id="libFileInput" multiple accept=".pdf,.xml,.txt,.docx" style="display:none" onchange="handleLibFileSelect(event)">
+      <div class="dup-warning" id="dupWarning" style="display:none;"></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="lib-toolbar">
+      <span class="lib-count" id="libCount">0 documents</span>
+      <div class="lib-toolbar-btns">
+        <button class="mock-btn" onclick="scoreAllLibDocs()">SCORE ALL ▸</button>
+        <button class="mock-btn" onclick="selectAllLibDocs()">SELECT ALL</button>
+        <button class="mock-btn" onclick="clearLibSelection()">CLEAR</button>
+        <button class="run-btn" onclick="matchLibWithChecklist()">CHECK AGAINST REQUIREMENTS ▸</button>
+        <button class="mock-btn" onclick="runMockLib()">MOCK ▸</button>
+      </div>
+    </div>
+
+    <!-- Change 6: Tier filter tabs -->
+    <div class="lib-tier-tabs" id="libTierTabs">
+      <button class="lib-tier-tab active" onclick="setLibTab('all')">All</button>
+      <button class="lib-tier-tab" onclick="setLibTab('uploaded')">Uploaded</button>
+      <button class="lib-tier-tab" onclick="setLibTab('A')">A</button>
+      <button class="lib-tier-tab" onclick="setLibTab('B')">B</button>
+      <button class="lib-tier-tab" onclick="setLibTab('C')">C</button>
+      <button class="lib-tier-tab" onclick="setLibTab('unscored')">Unscored</button>
+    </div>
+
+    <!-- Change 5: Score all progress bar -->
+    <div id="scoreAllProgress">
+      <div class="score-progress-label" id="scoreProgressLabel">Scoring 0 / 0...</div>
+      <div class="score-progress-track">
+        <div class="score-progress-fill" id="scoreProgressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Doc grid -->
+    <div class="lib-grid" id="libGrid"></div>
+
+    <!-- Match results -->
+    <div class="repo-match-wrap" id="repoMatchWrap">
+      <div class="repo-match-header">⬡ MATCH RESULTS — Library vs Checklist</div>
+      <div class="repo-match-summary" id="repoMatchSummary"></div>
+      <table class="repo-match-table">
+        <thead><tr><th>#</th><th>Checklist Requirement</th><th>Best SERFF Match</th><th>Status</th></tr></thead>
+        <tbody id="repoMatchBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Sub-module label -->
+  <div class="submodule-label">Step 2 &middot; Sub-Module &nbsp; <span>SERFF document quality scorer &mdash; determines template / model eligibility</span><span class="save-pill" id="savePill2"></span></div>
+
+  <div class="connector" style="height: 12px;"></div>
+
+  <!-- Quality scorer — dynamic -->
+  <div class="scorer-card idle" id="scorerCard">
+    <div class="scorer-status" id="scorerStatus">Select a source option above to score a SERFF document.</div>
+    <div class="scorer-grid" id="scorerGrid" style="display:none;">
+
+      <!-- Hard gates -->
+      <div>
+        <div class="section-title">Hard Gates</div>
+        <div class="gate-item">
+          <div class="gate-left">
+            <div class="gate-dot pass" id="gate-parseable-dot"></div>
+            <div class="gate-name" id="gate-parseable-name">Parseable format</div>
+          </div>
+          <div class="gate-value" id="gate-parseable-val">—</div>
+        </div>
+        <div class="gate-item">
+          <div class="gate-left">
+            <div class="gate-dot" id="gate-approved-dot"></div>
+            <div class="gate-name" id="gate-approved-name">Filing approved</div>
+          </div>
+          <div class="gate-value" id="gate-approved-val">—</div>
+        </div>
+        <div class="gate-item">
+          <div class="gate-left">
+            <div class="gate-dot" id="gate-currency-dot"></div>
+            <div class="gate-name" id="gate-currency-name">Statute currency</div>
+          </div>
+          <div class="gate-value" id="gate-currency-val">—</div>
+        </div>
+      </div>
+
+      <!-- Scoring dimensions -->
+      <div>
+        <div class="section-title">Scoring Dimensions</div>
+
+        <div class="dimension">
+          <div class="dimension-header">
+            <span class="dimension-name">Completeness</span>
+            <div class="dimension-meta">
+              <span class="dimension-weight">30%</span>
+              <span class="dimension-score score-num" id="score-completeness">0</span>
+            </div>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-completeness" style="width:0%"></div>
+            <div class="slider-thumb" id="thumb-completeness" style="left:0%"></div>
+          </div>
+        </div>
+
+        <div class="dimension">
+          <div class="dimension-header">
+            <span class="dimension-name">Generalizability</span>
+            <div class="dimension-meta">
+              <span class="dimension-weight">25%</span>
+              <span class="dimension-score score-num" id="score-generalizability">0</span>
+            </div>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-generalizability" style="width:0%"></div>
+            <div class="slider-thumb" id="thumb-generalizability" style="left:0%"></div>
+          </div>
+        </div>
+
+        <div class="dimension">
+          <div class="dimension-header">
+            <span class="dimension-name">Structural clarity</span>
+            <div class="dimension-meta">
+              <span class="dimension-weight">25%</span>
+              <span class="dimension-score score-num" id="score-clarity">0</span>
+            </div>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-clarity" style="width:0%"></div>
+            <div class="slider-thumb" id="thumb-clarity" style="left:0%"></div>
+          </div>
+        </div>
+
+        <div class="dimension">
+          <div class="dimension-header">
+            <span class="dimension-name">Precedent value</span>
+            <div class="dimension-meta">
+              <span class="dimension-weight">20%</span>
+              <span class="dimension-score score-num" id="score-precedent">0</span>
+            </div>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-precedent" style="width:0%"></div>
+            <div class="slider-thumb" id="thumb-precedent" style="left:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier panel -->
+      <div>
+        <div class="tier-panel">
+          <div class="tier-label-box" id="tierLabelBox">
+            <span class="tier-label-text" id="tierLabelText">—</span>
+          </div>
+          <div class="tier-score"><span id="compositeScore">0</span><span>/100</span></div>
+          <div class="tier-score-label">composite score</div>
+          <div class="tier-bar"><div class="tier-bar-fill" id="tierBarFill" style="width:0%"></div></div>
+          <div class="tier-breakdown">
+            <div class="tier-row"><span class="tier-row-name">Completeness</span><span class="tier-row-val" id="pts-completeness">— pts</span></div>
+            <div class="tier-row"><span class="tier-row-name">Generalizability</span><span class="tier-row-val" id="pts-generalizability">— pts</span></div>
+            <div class="tier-row"><span class="tier-row-name">Clarity</span><span class="tier-row-val" id="pts-clarity">— pts</span></div>
+            <div class="tier-row"><span class="tier-row-name">Precedent</span><span class="tier-row-val" id="pts-precedent">— pts</span></div>
+            <div class="tier-row total"><span class="tier-row-name">Total</span><span class="tier-row-val" id="pts-total">— pts</span></div>
+          </div>
+          <div class="tier-note" id="tierNote"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Step 03 -->
+  <div class="step-card expandable">
+    <div class="step-header">
+      <div class="step-header-left">
+        <div class="step-number">03</div>
+        <div class="step-title">Initial document checklist</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="step-badge">LLM Extraction<span class="save-pill" id="savePill3"></span></div>
+        <span class="step-lock-icon" id="lockIcon3" style="display:none;">🔒</span>
+        <button class="step-expand-btn" id="expandBtn2" onclick="togglePanel2()">RUN &rsaquo;</button>
+      </div>
+    </div>
+    <div class="step-desc">LLM parses statutes &rarr; structured checklist of required filings with status tags (mandatory / conditional / optional)</div>
+
+    <div class="step-panel" id="checklistPanel">
+      <div class="checklist-hint" id="checklistHint">Paste legislation text below, or run Step 01 first to auto-fill.</div>
+      <textarea class="checklist-textarea" id="checklistInput" rows="5" placeholder="Paste legislation research text here, or complete Step 01 to auto-fill..."></textarea>
+      <div class="checklist-actions">
+        <button class="run-btn" id="checklistBtn" onclick="runChecklist()">EXTRACT CHECKLIST</button>
+        <button class="mock-btn" onclick="runMockStep2()">MOCK ▸</button>
+      </div>
+      <div class="checklist-status" id="checklistStatus"></div>
+      <div class="checklist-summary" id="checklistSummary"></div>
+      <div class="checklist-table-wrap" id="checklistTableWrap">
+        <table class="checklist-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Document</th>
+              <th>Status</th>
+              <th>Category</th>
+              <th>Citation</th>
+              <th>Priority</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="checklistTableBody"></tbody>
+        </table>
+      </div>
+      <button class="add-doc-btn" id="addChecklistBtn" onclick="showAddChecklistRow()">＋ ADD DOCUMENT</button>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Step 04 -->
+  <div class="step-card expandable">
+    <div class="step-header">
+      <div class="step-header-left">
+        <div class="step-number">04</div>
+        <div class="step-title" style="color: #f97316;">Doc &harr; requirement matching engine</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="step-badge">Semantic Vector Match<span class="save-pill" id="savePill4"></span></div>
+        <button class="skip-btn" id="skipBtn4" onclick="skipStep4()">SKIP ›</button>
+        <span class="step-lock-icon" id="lockIcon4" style="display:none;">🔒</span>
+        <button class="step-expand-btn" id="expandBtn4" onclick="togglePanel4()">RUN &rsaquo;</button>
+      </div>
+    </div>
+    <div class="step-desc">Embed checklist requirements + SERFF document chunks &rarr; cosine similarity matching &rarr; coverage score, gap flags, and matched sections per requirement</div>
+
+    <div class="step-panel" id="matchPanel">
+      <!-- Source pills -->
+      <div class="match-source-bar" id="matchSourceBar">
+        <div class="match-source-pill">
+          <span class="pill-dot" style="background:#4ade80"></span>
+          <span class="pill-label">Step 03</span>
+          <span class="pill-val" id="matchSrc2">—</span>
+        </div>
+        <div class="match-source-pill">
+          <span class="pill-dot" style="background:#f97316"></span>
+          <span class="pill-label">Step 02</span>
+          <span class="pill-val" id="matchSrc3">—</span>
+        </div>
+      </div>
+
+      <!-- Action row -->
+      <div class="checklist-actions">
+        <button class="run-btn" id="matchRunBtn" onclick="runMatch()">RUN MATCHING</button>
+        <button class="mock-btn" onclick="runMockStep4()">MOCK ▸</button>
+      </div>
+
+      <div class="match-status" id="matchStatus"></div>
+
+      <!-- Summary -->
+      <div class="match-summary-bar" id="matchSummaryBar">
+        <div class="match-coverage-ring">
+          <div class="match-coverage-pct" id="matchCoveragePct">0%</div>
+          <div class="match-coverage-lbl">coverage</div>
+        </div>
+        <div class="match-divider"></div>
+        <div class="match-stat-group">
+          <div class="match-stat"><span class="match-stat-num covered" id="matchCoveredN">0</span><span class="match-stat-lbl">covered</span></div>
+          <div class="match-stat"><span class="match-stat-num partial" id="matchPartialN">0</span><span class="match-stat-lbl">partial</span></div>
+          <div class="match-stat"><span class="match-stat-num gap" id="matchGapN">0</span><span class="match-stat-lbl">gaps</span></div>
+        </div>
+      </div>
+
+      <!-- Match table -->
+      <div class="match-table-wrap" id="matchTableWrap">
+        <table class="match-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Requirement</th>
+              <th>Similarity</th>
+              <th>Status</th>
+              <th>Matched section</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="matchTableBody"></tbody>
+        </table>
+      </div>
+      <button class="add-doc-btn" id="addMatchBtn" onclick="showAddMatchRow()">＋ ADD REQUIREMENT</button>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Step 05 -->
+  <div class="step-card expandable">
+    <div class="step-header">
+      <div class="step-header-left">
+        <div class="step-number">05</div>
+        <div class="step-title" style="color: #818cf8;">Agent design from reference docs</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="step-badge">Claude Agent<span class="save-pill" id="savePill5"></span></div>
+        <button class="step-expand-btn" id="expandBtn5" onclick="togglePanel5()">RUN &rsaquo;</button>
+      </div>
+    </div>
+    <div class="step-desc">For each requirement: adopt, adapt, or generate a filing document &rarr; pre-fill known fields &rarr; compile submission package</div>
+
+    <div class="step-panel" id="agentPanel">
+      <!-- Source pills -->
+      <div class="match-source-bar">
+        <div class="match-source-pill">
+          <span class="pill-dot" style="background:#4ade80"></span>
+          <span class="pill-label">Step 03</span>
+          <span class="pill-val" id="agentSrc2">—</span>
+        </div>
+        <div class="match-source-pill">
+          <span class="pill-dot" style="background:#f97316"></span>
+          <span class="pill-label">Step 04</span>
+          <span class="pill-val" id="agentSrc4">—</span>
+        </div>
+        <div class="match-source-pill">
+          <span class="pill-dot" style="background:#7aa2f7"></span>
+          <span class="pill-label">Step 01</span>
+          <span class="pill-val" id="agentSrc1">—</span>
+        </div>
+      </div>
+
+      <div class="checklist-actions">
+        <button class="run-btn" id="agentRunBtn" onclick="runAgent()">RUN AGENT</button>
+        <button class="mock-btn" onclick="runMockStep5()">MOCK ▸</button>
+        <button class="pkg-btn" id="pkgBtn">COMPILE PACKAGE</button>
+        <button class="dl-all-btn" id="dlAllBtn" style="display:none;" onclick="downloadAllDocs()">⬇ DOWNLOAD ALL</button>
+        <button class="dl-all-btn" id="dlZipBtn" style="display:none;background:rgba(129,140,248,0.08);border-color:rgba(129,140,248,0.25);color:#818cf8;" onclick="downloadAllAsZip()">DOWNLOAD ALL AS ZIP ⬇</button>
+      </div>
+
+      <div class="match-status" id="agentStatus"></div>
+
+      <!-- Live agent log -->
+      <div class="agent-log" id="agentLog"></div>
+
+      <!-- Summary bar -->
+      <div class="agent-summary-bar" id="agentSummaryBar">
+        <div class="agent-stat-group">
+          <div class="agent-stat"><span class="agent-stat-num adopted"  id="agentAdoptedN">0</span><span class="agent-stat-lbl">adopted</span></div>
+          <div class="agent-stat"><span class="agent-stat-num adapted"  id="agentAdaptedN">0</span><span class="agent-stat-lbl">adapted</span></div>
+          <div class="agent-stat"><span class="agent-stat-num generated" id="agentGeneratedN">0</span><span class="agent-stat-lbl">generated</span></div>
+          <div class="agent-stat"><span class="agent-stat-num skipped"  id="agentSkippedN">0</span><span class="agent-stat-lbl">skipped</span></div>
+        </div>
+        <div class="match-divider"></div>
+        <div style="font-size:12px;color:#5a6a7a;" id="agentSummaryNote"></div>
+      </div>
+
+      <!-- Results table -->
+      <div class="agent-table-wrap" id="agentTableWrap">
+        <table class="agent-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Requirement</th>
+              <th>Action</th>
+              <th>Agent note</th>
+              <th>Output file</th>
+              <th>Generate</th>
+            </tr>
+          </thead>
+          <tbody id="agentTableBody"></tbody>
+        </table>
+      </div>
+      <button class="add-doc-btn" id="addAgentDocBtn" onclick="showAddAgentDocRow()">＋ ADD DOCUMENT</button>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- Attach to main product -->
+  <div class="attach-card">
+    <div class="step-header-left">
+      <span class="attach-icon">&rsaquo;</span>
+      <span class="attach-title">Attach to main product</span>
+    </div>
+    <div class="attach-desc">State-agnostic module plugs into existing captive insurance filing workflow &mdash; triggered by state selector at session start</div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-research"></div> Research</div>
+  <div class="legend-item"><div class="legend-dot dot-extraction"></div> Extraction</div>
+  <div class="legend-item"><div class="legend-dot dot-serff-manual"></div> SERFF manual</div>
+  <div class="legend-item"><div class="legend-dot dot-serff-agent"></div> SERFF agent</div>
+  <div class="legend-item"><div class="legend-dot dot-manual-input"></div> Manual input</div>
+  <div class="legend-item"><div class="legend-dot dot-quality"></div> Quality scorer</div>
+  <div class="legend-item"><div class="legend-dot dot-matching"></div> Matching</div>
+  <div class="legend-item"><div class="legend-dot dot-generation"></div> Generation</div>
+  <div class="legend-item"><div class="legend-dot dot-integration"></div> Integration</div>
+</div>
+
+<script>
+// ── Change 1: Settings helpers ────────────────────────────────────────────────
+function _getSettings() {
+  return {
+    apiKey: localStorage.getItem('ciff_api_key') || '',
+    model: localStorage.getItem('ciff_model') || 'claude-haiku-4-5'
+  };
+}
+
+function openSettings() {
+  var s = _getSettings();
+  document.getElementById('settingsApiKey').value = s.apiKey;
+  var sel = document.getElementById('settingsModel');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === s.model) { sel.selectedIndex = i; break; }
+  }
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function saveSettings() {
+  var key = document.getElementById('settingsApiKey').value.trim();
+  var model = document.getElementById('settingsModel').value;
+  if (key) localStorage.setItem('ciff_api_key', key);
+  else localStorage.removeItem('ciff_api_key');
+  localStorage.setItem('ciff_model', model);
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+// ── Change 6: Lib tab filter state ───────────────────────────────────────────
+var _libActiveTab = 'all';
+
+function setLibTab(tab) {
+  _libActiveTab = tab;
+  var tabs = document.querySelectorAll('.lib-tier-tab');
+  var tabLabels = ['all','uploaded','A','B','C','unscored'];
+  tabs.forEach(function(t, i) {
+    t.classList.toggle('active', tabLabels[i] === tab);
+  });
+  _rebuildLibGrid();
+}
+
+// ── Shared state between steps
+window._step1 = { state: '', caseType: '', text: '', terms: [] };
+
+// Load states
+var _allStates = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','District of Columbia'];
+
+function _populateStateSelects(states) {
+  var optHtml = '<option value="">Select a state...</option>' +
+    states.map(function(s){ return '<option value="' + s + '"' + (s==='Utah'?' selected':'') + '>' + s + '</option>'; }).join('');
+  var opt2Html = '<option value="">2nd state (optional)</option>' +
+    states.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('');
+  var opt3Html = '<option value="">3rd state (optional)</option>' +
+    states.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('');
+  document.getElementById('stateSelect').innerHTML = optHtml;
+  var s2 = document.getElementById('stateSelect2');
+  var s3 = document.getElementById('stateSelect3');
+  if (s2) s2.innerHTML = opt2Html;
+  if (s3) s3.innerHTML = opt3Html;
+}
+
+fetch('http://localhost:3001/api/states').then(function(r){ return r.json(); }).then(function(states) {
+  _allStates = states;
+  _populateStateSelects(states);
+}).catch(function() {
+  _populateStateSelects(_allStates);
+});
+
+// ── Change 10: Multi-state helpers ────────────────────────────────────────────
+var _extraStatesShown = 0;
+function addExtraState() {
+  if (_extraStatesShown >= 2) return;
+  _extraStatesShown++;
+  document.getElementById('addStateSlot' + _extraStatesShown).style.display = '';
+  if (_extraStatesShown >= 2) document.getElementById('addStateBtn').style.display = 'none';
+}
+function removeExtraState(n) {
+  document.getElementById('addStateSlot' + (n-1)).style.display = 'none';
+  var sel = document.getElementById('stateSelect' + n);
+  if (sel) sel.value = '';
+  _extraStatesShown = Math.max(0, _extraStatesShown - 1);
+  document.getElementById('addStateBtn').style.display = '';
+  // Re-number shown slots
+  if (n === 2 && _extraStatesShown === 1) {
+    // slot2 was removed but slot1 still showing: nothing to reorder
+  }
+}
+
+function togglePanel() {
+  const panel = document.getElementById('researchPanel');
+  const btn = document.getElementById('expandBtn');
+  const open = panel.classList.toggle('open');
+  btn.textContent = open ? 'CLOSE ✕' : 'RUN ›';
+}
+
+function mdToHtml(md) {
+  return md
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>(\n|$))+/g, m => `<ul>${m}</ul>`)
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^(?!<[hup])/gm, '')
+    .replace(/(<\/h[123]>)(\n)/g, '$1')
+    .split('\n').map(l => l.trim() ? (l.startsWith('<') ? l : `<p>${l}</p>`) : '').join('');
+}
+
+async function _runResearchForState(state, caseType, resultEl, statusEl) {
+  var settings = _getSettings();
+  const resp = await fetch('http://localhost:3001/api/legislation-research', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state, caseType, apiKey: settings.apiKey, model: settings.model }),
+  });
+  if (!resp.ok) throw new Error('Server error: ' + resp.status);
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let resultText = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const msg = JSON.parse(line.slice(6));
+        if (msg.type === 'status') {
+          statusEl.textContent = '[' + state + '] ' + msg.message;
+        } else if (msg.type === 'result') {
+          resultText = msg.text;
+        } else if (msg.type === 'error') {
+          throw new Error(msg.message);
+        }
+      } catch(parseErr) { if (parseErr.message && parseErr.message !== 'Unexpected end of JSON input') throw parseErr; }
+    }
+  }
+  return resultText;
+}
+
+async function runResearch() {
+  const state = document.getElementById('stateSelect').value;
+  const caseType = document.getElementById('caseTypeInput').value.trim();
+  const statusEl = document.getElementById('researchStatus');
+  const resultEl = document.getElementById('researchResult');
+  const btn = document.getElementById('runBtn');
+
+  if (!state) { statusEl.textContent = 'Please select a state.'; statusEl.className = 'research-status error'; return; }
+  if (!caseType) { statusEl.textContent = 'Please enter a case type.'; statusEl.className = 'research-status error'; return; }
+
+  // Collect all selected states
+  var states = [state];
+  var s2 = document.getElementById('stateSelect2');
+  var s3 = document.getElementById('stateSelect3');
+  if (s2 && s2.value) states.push(s2.value);
+  if (s3 && s3.value) states.push(s3.value);
+
+  // Reset all downstream data when starting a fresh search
+  window._step1 = { state: '', caseType: '', text: '', terms: [] };
+  window._step2 = undefined;
+  window._step4 = { matches: null };
+  window._step5 = { docs: null, _items: null };
+  // Clear SERFF terms
+  var serffRow = document.getElementById('serffTermsRow');
+  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  // Clear checklist
+  document.getElementById('checklistInput').value = '';
+  document.getElementById('checklistSummary').classList.remove('visible');
+  document.getElementById('checklistTableWrap').classList.remove('visible');
+  document.getElementById('checklistTableBody').innerHTML = '';
+  document.getElementById('checklistStatus').textContent = '';
+  var hint = document.getElementById('checklistHint');
+  hint.textContent = 'Paste legislation text below, or run Step 01 first to auto-fill.';
+  hint.className = 'checklist-hint';
+  // Clear repo match
+  var rmw = document.getElementById('repoMatchWrap');
+  if (rmw) rmw.classList.remove('visible');
+
+  btn.disabled = true;
+  resultEl.innerHTML = '';
+  resultEl.classList.remove('visible');
+  statusEl.className = 'research-status active';
+  statusEl.textContent = 'Connecting...';
+
+  try {
+    var combinedText = '';
+    for (var si = 0; si < states.length; si++) {
+      var st = states[si];
+      statusEl.textContent = 'Searching ' + st + ' (' + (si+1) + '/' + states.length + ')...';
+      var stateText = await _runResearchForState(st, caseType, resultEl, statusEl);
+      if (stateText) {
+        combinedText += (combinedText ? '\n\n---\n\n## ' + st + '\n\n' : '') + stateText;
+        var headerTag = states.length > 1 ? '<h2>' + st + '</h2>' : '';
+        resultEl.innerHTML += (resultEl.innerHTML ? '<hr style="border-color:#1e2738;margin:20px 0;">' : '') + headerTag + mdToHtml(stateText);
+        resultEl.classList.add('visible');
+      }
+    }
+    statusEl.textContent = 'Done.';
+    statusEl.className = 'research-status';
+    window._step1.text = combinedText;
+    window._step1.state = state;
+    window._step1.caseType = caseType;
+    notifyStep2Ready();
+    generateSerffTerms(combinedText, state, caseType);
+    saveStep(1, window._step1);
+    checkStepLocks();
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'research-status error';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Step 02 ──────────────────────────────────────────────────────────────────
+
+function notifyStep2Ready() {
+  const hint = document.getElementById('checklistHint');
+  const input = document.getElementById('checklistInput');
+  hint.textContent = '✓ Step 01 complete — legislation text loaded. Ready to extract checklist.';
+  hint.className = 'checklist-hint ready';
+  input.value = window._step1.text;
+  const s1 = document.getElementById('agentSrc1');
+  if (s1 && window._step1.state) s1.textContent = window._step1.state + ' — legislation loaded';
+}
+
+// ── SERFF Search Terms ────────────────────────────────────────────────────────
+
+const MOCK_SERFF_TERMS = [
+  'association captive', 'captive insurance application',
+  'feasibility study captive', 'Utah captive formation',
+  'sports association captive', 'captive bylaws',
+  'captive reinsurance exhibit', 'NAIC annual statement captive',
+  'captive economic benefit', 'captive pro forma financials',
+  'association member captive', 'captive biographical affidavit'
+];
+
+function renderSerffTerms(terms) {
+  var row = document.getElementById('serffTermsRow');
+  var chips = document.getElementById('serffTermsChips');
+  if (!row || !chips) return;
+  chips.innerHTML = terms.map(function(t, i) {
+    return '<span class="term-chip" title="Click to copy" onclick="copyTerm(this,\'' + t.replace(/'/g, "\\'") + '\')">' + esc(t) + '</span>';
+  }).join('');
+  row.classList.add('visible');
+  window._step1.terms = terms;
+}
+
+function copyTerm(el, text) {
+  navigator.clipboard.writeText(text).then(function() {
+    el.classList.add('copied');
+    setTimeout(function() { el.classList.remove('copied'); }, 1200);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    el.classList.add('copied'); setTimeout(function() { el.classList.remove('copied'); }, 1200);
+  });
+}
+
+function copyAllTerms() {
+  var terms = window._step1.terms || [];
+  var text = terms.join(', ');
+  var btn = document.getElementById('termsCopyAllBtn');
+  navigator.clipboard.writeText(text).then(function() {
+    if (btn) { btn.textContent = '✓ COPIED'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'COPY ALL'; btn.classList.remove('copied'); }, 1500); }
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    if (btn) { btn.textContent = '✓ COPIED'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'COPY ALL'; btn.classList.remove('copied'); }, 1500); }
+  });
+}
+
+async function generateSerffTerms(text, state, caseType) {
+  try {
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/serff-search-terms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text, state: state, caseType: caseType, apiKey: settings.apiKey, model: settings.model })
+    });
+    if (!resp.ok) throw new Error('server ' + resp.status);
+    var data = await resp.json();
+    if (data.terms && data.terms.length) renderSerffTerms(data.terms);
+  } catch(e) {
+    // Fallback to mock terms if API fails
+    renderSerffTerms(MOCK_SERFF_TERMS);
+    console.warn('SERFF terms fallback to mock:', e);
+  }
+}
+
+// ── SERFF Document Library ────────────────────────────────────────────────────
+
+const SERFF_REPOSITORY = [
+  { id:'sr01', name:'Transmittal Cover Page',               category:'Filing',       desc:'SERFF electronic filing transmittal' },
+  { id:'sr02', name:'Application to Form a Captive',        category:'Formation',    desc:'State DOI captive application form' },
+  { id:'sr03', name:'Biographical Affidavit',               category:'Formation',    desc:'Officers & Directors background info' },
+  { id:'sr04', name:'Business Plan',                        category:'Formation',    desc:'Lines of coverage, premiums, risk program' },
+  { id:'sr05', name:'Statement of Economic Benefit',        category:'Formation',    desc:'Economic benefit to domicile state' },
+  { id:'sr06', name:'Feasibility Study',                    category:'Financial',    desc:'Actuarial feasibility analysis' },
+  { id:'sr07', name:'Pro Forma Financial Statements',       category:'Financial',    desc:'Projected financials (1–3 years)' },
+  { id:'sr08', name:'Bank Capitalization Confirmation',     category:'Financial',    desc:'Bank letter confirming capital deposit' },
+  { id:'sr09', name:'Irrevocable Letter of Credit',         category:'Financial',    desc:'LOC in lieu of cash deposit' },
+  { id:'sr10', name:'Investment Policy Statement',          category:'Financial',    desc:'Asset allocation and investment rules' },
+  { id:'sr11', name:'Articles of Incorporation',            category:'Legal',        desc:'Corporate formation document' },
+  { id:'sr12', name:'Articles of Organization (LLC)',       category:'Legal',        desc:'LLC formation document' },
+  { id:'sr13', name:'Bylaws',                               category:'Legal',        desc:'Corporate governance rules' },
+  { id:'sr14', name:'Operating Agreement (LLC)',            category:'Legal',        desc:'LLC operating agreement' },
+  { id:'sr15', name:'Membership Agreement',                 category:'Legal',        desc:'Association membership terms' },
+  { id:'sr16', name:'Appointment of Commissioner',          category:'Legal',        desc:'Service of process designation' },
+  { id:'sr17', name:'Certificate of Organization',          category:'Legal',        desc:'State-issued formation certificate' },
+  { id:'sr18', name:'Board Resolution',                     category:'Legal',        desc:'Board authorization for captive formation' },
+  { id:'sr19', name:'Reinsurance Exhibit',                  category:'Regulatory',   desc:'Reinsurance treaty details' },
+  { id:'sr20', name:'Reinsurance Treaty',                   category:'Regulatory',   desc:'Full reinsurance contract' },
+  { id:'sr21', name:'CPA Authorization Application',        category:'Regulatory',   desc:'DOI-approved auditor form' },
+  { id:'sr22', name:'Actuary Certification Application',    category:'Regulatory',   desc:'DOI-approved actuary form' },
+  { id:'sr23', name:'NAIC Annual Statement Blank',          category:'Regulatory',   desc:'Standard annual financial statement' },
+  { id:'sr24', name:'Premium Tax Return',                   category:'Regulatory',   desc:'Annual captive premium tax filing' },
+  { id:'sr25', name:'Management Agreement',                 category:'Operational',  desc:'Third-party captive manager agreement' },
+  { id:'sr26', name:'Service Provider Disclosures',         category:'Operational',  desc:'Manager, CPA, actuary approvals' },
+  { id:'sr27', name:'Claims Management Procedures',         category:'Operational',  desc:'Claims handling workflow document' },
+  { id:'sr28', name:'Loss Control Program',                 category:'Operational',  desc:'Risk mitigation and safety program' },
+];
+
+// ── IndexedDB wrapper ─────────────────────────────────────────────────────────
+var _libDB = null;
+var _libDocs = {};
+var _libSelected = new Set();
+
+function _openLibDB() {
+  return new Promise(function(resolve, reject) {
+    if (_libDB) { resolve(_libDB); return; }
+    var req = indexedDB.open('SerffDocLib', 1);
+    req.onupgradeneeded = function(e) { e.target.result.createObjectStore('files', { keyPath: 'id' }); };
+    req.onsuccess  = function(e) { _libDB = e.target.result; resolve(_libDB); };
+    req.onerror    = function(e) { reject(e); };
+  });
+}
+function _libSaveFile(id, buffer, name) {
+  return _openLibDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction('files','readwrite');
+      tx.objectStore('files').put({ id: id, name: name, data: buffer });
+      tx.oncomplete = resolve; tx.onerror = reject;
+    });
+  });
+}
+function _libGetFile(id) {
+  return _openLibDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var req = db.transaction('files').objectStore('files').get(id);
+      req.onsuccess = function(e) { resolve(e.target.result); };
+      req.onerror = reject;
+    });
+  });
+}
+function _libDeleteFile(id) {
+  return _openLibDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction('files','readwrite');
+      tx.objectStore('files').delete(id);
+      tx.oncomplete = resolve; tx.onerror = reject;
+    });
+  });
+}
+function _libSaveMeta() {
+  try { localStorage.setItem('ciff_lib_docs', JSON.stringify(_libDocs)); } catch(e) {}
+}
+function _libLoadMeta() {
+  try {
+    var raw = localStorage.getItem('ciff_lib_docs');
+    if (raw) { _libDocs = JSON.parse(raw); }
+    Object.keys(_libDocs).forEach(function(id) { if (_libDocs[id].selected) _libSelected.add(id); });
+  } catch(e) { _libDocs = {}; }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function initLibrary() {
+  _libLoadMeta();
+  SERFF_REPOSITORY.forEach(function(doc) {
+    if (!_libDocs[doc.id]) {
+      _libDocs[doc.id] = { id: doc.id, name: doc.name, category: doc.category,
+        size: null, type: 'REF', isBuiltIn: true, score: null, tier: null, selected: false, uploadedAt: null };
+    }
+  });
+  _rebuildLibGrid();
+}
+
+// ── Upload handlers ───────────────────────────────────────────────────────────
+function handleLibDrop(e) {
+  e.preventDefault();
+  document.getElementById('libUploadZone').classList.remove('dragover');
+  _addLibFiles(e.dataTransfer.files);
+}
+function handleLibFileSelect(e) {
+  _addLibFiles(e.target.files);
+  e.target.value = '';
+}
+function _addLibFiles(fileList) {
+  var files = Array.from(fileList);
+  if (!files.length) return;
+  // Change 7: duplicate detection
+  var existingNames = Object.values(_libDocs).map(function(d){ return d.name.toLowerCase(); });
+  var skipped = [];
+  var toAdd = files.filter(function(file) {
+    if (existingNames.indexOf(file.name.toLowerCase()) !== -1) {
+      skipped.push(file.name);
+      return false;
+    }
+    return true;
+  });
+  var dupEl = document.getElementById('dupWarning');
+  if (skipped.length && dupEl) {
+    dupEl.textContent = skipped.map(function(n){ return '⚠ ' + n + ' already in library — skipped'; }).join('  |  ');
+    dupEl.style.display = '';
+    setTimeout(function(){ dupEl.style.display = 'none'; dupEl.textContent = ''; }, 5000);
+  }
+  var pending = toAdd.length;
+  if (!pending) return;
+  toAdd.forEach(function(file) {
+    var id  = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    var ext = file.name.split('.').pop().toUpperCase();
+    _libDocs[id] = { id: id, name: file.name, size: file.size, type: ext,
+      category: 'Uploaded', isBuiltIn: false, score: null, tier: null,
+      selected: true, uploadedAt: new Date().toLocaleDateString() };
+    _libSelected.add(id);
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      _libSaveFile(id, ev.target.result, file.name).then(function() {
+        pending--;
+        if (pending === 0) { _libSaveMeta(); _rebuildLibGrid(); }
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function _rebuildLibGrid() {
+  var grid  = document.getElementById('libGrid');
+  var count = document.getElementById('libCount');
+  if (!grid) return;
+  var docs = Object.values(_libDocs);
+  docs.sort(function(a,b) {
+    if (!a.isBuiltIn && b.isBuiltIn) return -1;
+    if (a.isBuiltIn && !b.isBuiltIn) return 1;
+    return (a.category||'').localeCompare(b.category||'') || a.name.localeCompare(b.name);
+  });
+  if (count) count.textContent = docs.length + ' document' + (docs.length!==1?'s':'') + ' · ' + _libSelected.size + ' selected';
+  // Change 6: apply tier filter
+  var tab = _libActiveTab || 'all';
+  var filtered = docs.filter(function(doc) {
+    if (tab === 'all') return true;
+    if (tab === 'uploaded') return !doc.isBuiltIn;
+    if (tab === 'unscored') return doc.score === null;
+    return doc.tier === tab;
+  });
+  grid.innerHTML = filtered.map(_renderLibCard).join('');
+}
+function _fmtSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1048576) return Math.round(bytes/1024) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+function _renderLibCard(doc) {
+  var sel = _libSelected.has(doc.id);
+  var scoreHtml = doc.score !== null
+    ? '<span class="lib-tier-badge tier-' + (doc.tier||'b').toLowerCase() + '">' + (doc.tier||'?') + '</span>' +
+      '<span class="lib-score-num">' + doc.score + '</span><span style="color:#3a4a5a;font-size:10px;">/100</span>'
+    : '<span style="color:#3a4a5a;font-size:11px;">not scored</span>';
+  var dlBtn = !doc.isBuiltIn
+    ? '<button class="lib-card-btn" onclick="downloadLibDoc(\'' + doc.id + '\')">⬇ GET</button>' : '';
+  var meta = doc.isBuiltIn
+    ? '<span class="lib-card-cat">' + esc(doc.category||'') + '</span>'
+    : '<span class="lib-card-cat">' + _fmtSize(doc.size) + (doc.uploadedAt?' · '+doc.uploadedAt:'') + '</span>';
+  return '<div class="lib-card' + (sel?' selected':'') + '" id="lc-' + doc.id + '">' +
+    '<div class="lib-card-top">' +
+      '<span class="lib-card-type type-' + (doc.type||'file').toLowerCase() + '">' + esc(doc.type||'FILE') + '</span>' +
+      '<span class="lib-card-sel" onclick="toggleLibDoc(\'' + doc.id + '\')">' + (sel?'☑':'☐') + '</span>' +
+    '</div>' +
+    '<div class="lib-card-name" title="' + esc(doc.name) + '">' + esc(doc.name) + '</div>' +
+    meta +
+    '<div class="lib-card-score">' + scoreHtml + '</div>' +
+    '<div class="lib-card-actions">' +
+      '<button class="lib-card-btn" onclick="scoreLibDoc(\'' + doc.id + '\')">SCORE ▸</button>' +
+      dlBtn +
+      '<button class="lib-card-btn danger" onclick="removeLibDoc(\'' + doc.id + '\')">✕</button>' +
+    '</div>' +
+  '</div>';
+}
+
+// ── Selection ─────────────────────────────────────────────────────────────────
+function toggleLibDoc(id) {
+  var sel = _libSelected.has(id);
+  if (sel) { _libSelected.delete(id); if (_libDocs[id]) _libDocs[id].selected = false; }
+  else     { _libSelected.add(id);    if (_libDocs[id]) _libDocs[id].selected = true; }
+  _libSaveMeta();
+  var card = document.getElementById('lc-' + id);
+  if (!card) { _rebuildLibGrid(); return; }
+  card.className = 'lib-card' + (_libSelected.has(id)?' selected':'');
+  card.querySelector('.lib-card-sel').textContent = _libSelected.has(id) ? '☑' : '☐';
+  var c = document.getElementById('libCount');
+  if (c) c.textContent = Object.keys(_libDocs).length + ' documents · ' + _libSelected.size + ' selected';
+}
+function selectAllLibDocs() {
+  Object.keys(_libDocs).forEach(function(id) { _libSelected.add(id); _libDocs[id].selected = true; });
+  _libSaveMeta(); _rebuildLibGrid();
+}
+function clearLibSelection() {
+  _libSelected.clear();
+  Object.keys(_libDocs).forEach(function(id) { _libDocs[id].selected = false; });
+  _libSaveMeta(); _rebuildLibGrid();
+  document.getElementById('repoMatchWrap').classList.remove('visible');
+}
+
+// ── Score ─────────────────────────────────────────────────────────────────────
+async function scoreLibDoc(id) {
+  var doc = _libDocs[id]; if (!doc) return;
+  var card = document.getElementById('lc-' + id);
+  var btns = card ? card.querySelectorAll('.lib-card-btn') : [];
+  btns.forEach(function(b){ if(b.textContent==='SCORE ▸'){b.textContent='...';b.disabled=true;} });
+  try {
+    var text = doc.isBuiltIn
+      ? 'Reference document: ' + doc.name + ' — ' + (doc.category||'') + ' category captive insurance filing document'
+      : await _libReadText(id, doc.name);
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/serff-quality-score', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ content: text.slice(0,8000), name: doc.name, apiKey: settings.apiKey, model: settings.model })
+    });
+    var data = await resp.json();
+    if (data.composite !== undefined) {
+      _libDocs[id].score = data.composite;
+      _libDocs[id].tier  = data.tier;
+      _libDocs[id].gates = data.gates;
+      _libSaveMeta();
+      window._step3 = window._step3 || {};
+      window._step3.score = data;
+      if (typeof animateScorer === 'function') animateScorer(data);
+      if (card) { card.outerHTML = _renderLibCard(_libDocs[id]); }
+    }
+  } catch(e) {
+    btns.forEach(function(b){ if(b.textContent==='...'){b.textContent='ERR';b.disabled=false;} });
+  }
+}
+async function scoreAllLibDocs() {
+  var unscored = Object.values(_libDocs).filter(function(d){ return d.score===null; });
+  var total = unscored.length;
+  if (!total) return;
+  // Change 5: show progress bar
+  var prog = document.getElementById('scoreAllProgress');
+  var label = document.getElementById('scoreProgressLabel');
+  var fill = document.getElementById('scoreProgressFill');
+  if (prog) prog.classList.add('visible');
+  for (var i=0; i<unscored.length; i++) {
+    if (label) label.textContent = 'Scoring ' + (i+1) + ' / ' + total + '...';
+    if (fill) fill.style.width = Math.round((i / total) * 100) + '%';
+    await scoreLibDoc(unscored[i].id);
+    await new Promise(function(r){ setTimeout(r, 600); });
+  }
+  if (fill) fill.style.width = '100%';
+  if (label) label.textContent = 'Done — ' + total + ' documents scored.';
+  setTimeout(function() { if (prog) prog.classList.remove('visible'); }, 2000);
+}
+function _libReadText(id, name) {
+  return _libGetFile(id).then(function(record) {
+    if (!record) return '(file not found in local storage)';
+    var ext = (name||'').split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '(PDF binary — name: ' + name + ')';
+    try { return new TextDecoder('utf-8').decode(new Uint8Array(record.data)); }
+    catch(e) { return '(binary: ' + name + ')'; }
+  });
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function downloadLibDoc(id) {
+  var doc = _libDocs[id]; if (!doc || doc.isBuiltIn) return;
+  _libGetFile(id).then(function(record) {
+    if (!record) { alert('File not found — it may have been cleared from browser storage.'); return; }
+    var blob = new Blob([record.data]);
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = doc.name; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  });
+}
+
+// ── Remove ────────────────────────────────────────────────────────────────────
+function removeLibDoc(id) {
+  var doc = _libDocs[id]; if (!doc) return;
+  if (doc.isBuiltIn) { _libSelected.delete(id); doc.selected = false; _libSaveMeta(); _rebuildLibGrid(); return; }
+  delete _libDocs[id];
+  _libSelected.delete(id);
+  _libDeleteFile(id);
+  _libSaveMeta(); _rebuildLibGrid();
+}
+
+// ── Match ─────────────────────────────────────────────────────────────────────
+function matchLibWithChecklist() {
+  var checklist = window._step2 && window._step2.items;
+  if (!checklist || !checklist.length) {
+    alert('Run Step 03 (EXTRACT CHECKLIST) first to get requirements, or use MOCK ▸ in Step 03.');
+    return;
+  }
+  if (!_libSelected.size) { alert('Select at least one document from the library first.'); return; }
+  var selectedDocs = Object.values(_libDocs).filter(function(d){ return _libSelected.has(d.id); });
+  _renderRepoMatch(checklist, selectedDocs);
+}
+
+function runMockLib() {
+  SERFF_REPOSITORY.forEach(function(doc) {
+    if (!_libDocs[doc.id]) _libDocs[doc.id] = { id:doc.id, name:doc.name, category:doc.category,
+      size:null, type:'REF', isBuiltIn:true, score:null, tier:null, selected:false, uploadedAt:null };
+  });
+  ['sr02','sr03','sr04','sr05','sr06','sr07','sr08','sr09','sr10','sr11','sr12','sr13','sr14','sr15','sr16','sr17','sr19','sr21','sr22','sr23'].forEach(function(id) {
+    _libSelected.add(id); if (_libDocs[id]) _libDocs[id].selected = true;
+  });
+  _libSaveMeta(); _rebuildLibGrid();
+  var checklist = (window._step2 && window._step2.items) || MOCK_STEP2_CHECKLIST.items;
+  var selectedDocs = Object.values(_libDocs).filter(function(d){ return _libSelected.has(d.id); });
+  _renderRepoMatch(checklist, selectedDocs);
+}
+
+// Auto-init handled in consolidated DOMContentLoaded below
+
+// ── Match engine ──────────────────────────────────────────────────────────────
+// State name suffixes to strip before matching (e.g. "to Utah", "in Texas")
+var _STATE_STRIP = /\s+(to|in|for|of)\s+(alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new\s+\w+|north\s+\w+|ohio|oklahoma|oregon|pennsylvania|rhode\s+island|south\s+\w+|tennessee|texas|utah|vermont|virginia|washington|west\s+virginia|wisconsin|wyoming|district\s+of\s+columbia)\s*$/i;
+
+// Synonym pairs — both directions
+var _SYNONYMS = [
+  ['incorporation','organization'],
+  ['certification','authorization'],
+  ['certificate','confirmation'],
+  ['statement','declaration'],
+  ['exhibit','schedule'],
+  ['agreement','contract'],
+];
+
+function _normName(n) {
+  return n.toLowerCase()
+    .replace(_STATE_STRIP, '')        // strip state qualifiers
+    .replace(/[(),-]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function _applySynonyms(w) {
+  for (var i = 0; i < _SYNONYMS.length; i++) {
+    if (w === _SYNONYMS[i][0]) return _SYNONYMS[i][1];
+    if (w === _SYNONYMS[i][1]) return _SYNONYMS[i][0];
+  }
+  return w;
+}
+
+function _repoMatchScore(checkName, serffName) {
+  var cn = _normName(checkName);
+  var sn = _normName(serffName);
+  if (cn === sn) return 100;
+  if (cn.includes(sn) || sn.includes(cn)) return 88;
+  // keep all words ≥ 2 chars (preserves LLC, CPA, LOC, etc.)
+  var stopwords = new Set(['of','to','as','in','for','and','the','a','an','by']);
+  var cw = cn.split(/\s+/).filter(function(w){ return w.length >= 2 && !stopwords.has(w); });
+  var sw = sn.split(/\s+/).filter(function(w){ return w.length >= 2 && !stopwords.has(w); });
+  // expand synonyms into each word list
+  var cwExp = cw.concat(cw.map(_applySynonyms));
+  var swExp = sw.concat(sw.map(_applySynonyms));
+  var overlap = cwExp.filter(function(w){ return swExp.some(function(s){ return s === w || s.includes(w) || w.includes(s); }); }).length / 2;
+  if (!overlap) return 0;
+  return Math.min(78, Math.round(overlap / Math.max(cw.length, sw.length) * 100));
+}
+
+function _renderRepoMatch(checklist, selectedDocs) {
+  var tbody = document.getElementById('repoMatchBody');
+  var summaryEl = document.getElementById('repoMatchSummary');
+  var found = 0, partial = 0, missing = 0;
+
+  tbody.innerHTML = checklist.map(function(item, i) {
+    var best = null, bestScore = 0;
+    selectedDocs.forEach(function(doc) {
+      var s = _repoMatchScore(item.name, doc.name);
+      if (s > bestScore) { bestScore = s; best = doc; }
+    });
+    var badge;
+    if      (bestScore >= 80) { badge='found';   found++;   }
+    else if (bestScore >= 40) { badge='partial'; partial++; }
+    else                      { badge='missing'; missing++; }
+
+    var matchCell = (best && badge !== 'missing')
+      ? '<span style="color:#7aa2f7;">' + esc(best.name) + '</span>'
+      : '<span style="color:#3a4a5a;">—</span>';
+    var label = badge === 'found' ? '✓ covered' : badge === 'partial' ? '~ partial' : '✗ missing';
+
+    return '<tr>' +
+      '<td style="color:#5a6a7a;font-family:\'JetBrains Mono\',monospace;font-size:11px;">' + String(i+1).padStart(2,'0') + '</td>' +
+      '<td style="font-weight:600;color:#e8ecf4;">' + esc(item.name) + '</td>' +
+      '<td>' + matchCell + '</td>' +
+      '<td><span class="match-cover-badge ' + badge + '">' + label + '</span></td>' +
+      '</tr>';
+  }).join('');
+
+  var pct = Math.round((found + partial*0.5) / checklist.length * 100);
+  summaryEl.innerHTML =
+    '<div class="repo-ms-item"><div class="repo-ms-num found">'   + found   + '</div><div class="repo-ms-lbl">COVERED</div></div>' +
+    '<div class="repo-ms-item"><div class="repo-ms-num partial">' + partial + '</div><div class="repo-ms-lbl">PARTIAL</div></div>' +
+    '<div class="repo-ms-item"><div class="repo-ms-num missing">' + missing + '</div><div class="repo-ms-lbl">MISSING</div></div>' +
+    '<div class="repo-ms-item"><div class="repo-ms-num" style="color:#7aa2f7;">' + pct + '%</div><div class="repo-ms-lbl">COVERAGE</div></div>';
+
+  document.getElementById('repoMatchWrap').classList.add('visible');
+  document.getElementById('repoMatchWrap').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function togglePanel2() {
+  const panel = document.getElementById('checklistPanel');
+  const btn = document.getElementById('expandBtn2');
+  const open = panel.classList.toggle('open');
+  btn.textContent = open ? 'CLOSE ✕' : 'RUN ›';
+  // Auto-fill if step1 result already available
+  if (open && window._step1.text && !document.getElementById('checklistInput').value) {
+    notifyStep2Ready();
+  }
+}
+
+async function runChecklist() {
+  const text = document.getElementById('checklistInput').value.trim();
+  const statusEl = document.getElementById('checklistStatus');
+  const summaryEl = document.getElementById('checklistSummary');
+  const tableWrap = document.getElementById('checklistTableWrap');
+  const tbody = document.getElementById('checklistTableBody');
+  const btn = document.getElementById('checklistBtn');
+
+  if (!text) {
+    statusEl.textContent = 'Please paste legislation text or run Step 01 first.';
+    statusEl.className = 'checklist-status error';
+    return;
+  }
+
+  btn.disabled = true;
+  summaryEl.classList.remove('visible');
+  tableWrap.classList.remove('visible');
+  tbody.innerHTML = '';
+  statusEl.className = 'checklist-status active';
+  statusEl.textContent = 'Connecting...';
+
+  const state = window._step1.state || 'Unknown State';
+  const caseType = window._step1.caseType || 'captive insurance';
+
+  try {
+    var settings = _getSettings();
+    const resp = await fetch('http://localhost:3001/api/document-checklist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state, caseType, legislationText: text, apiKey: settings.apiKey, model: settings.model }),
+    });
+
+    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const msg = JSON.parse(line.slice(6));
+          if (msg.type === 'status') {
+            statusEl.textContent = msg.message;
+          } else if (msg.type === 'result') {
+            renderChecklist(msg.checklist, summaryEl, tbody, tableWrap);
+            window._step2 = msg.checklist;
+            saveStep(3, window._step2);
+            checkStepLocks();
+            statusEl.textContent = `Done — ${msg.checklist.items?.length ?? 0} documents identified.`;
+            statusEl.className = 'checklist-status';
+          } else if (msg.type === 'error') {
+            statusEl.textContent = 'Error: ' + msg.message;
+            statusEl.className = 'checklist-status error';
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'checklist-status error';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderChecklist(cl, summaryEl, tbody, tableWrap) {
+  const items = cl.items || [];
+  const mandatory   = items.filter(i => i.status === 'mandatory').length;
+  const conditional = items.filter(i => i.status === 'conditional').length;
+  const optional    = items.filter(i => i.status === 'optional').length;
+
+  summaryEl.innerHTML = `
+    <div>${cl.summary || ''}</div>
+    <div class="stat-row">
+      <span class="stat-pill mandatory">${mandatory} mandatory</span>
+      <span class="stat-pill conditional">${conditional} conditional</span>
+      <span class="stat-pill optional">${optional} optional</span>
+    </div>`;
+  summaryEl.classList.add('visible');
+
+  tbody.innerHTML = items.map((item, i) => {
+    var prio = item.priority || '—';
+    var prioClass = prio === 'BLOCKING' ? 'prio-blocking' : prio === 'HIGH' ? 'prio-high' : prio === 'NICE' ? 'prio-nice' : 'prio-none';
+    return `
+    <tr>
+      <td style="color:#5a6a7a;font-family:'JetBrains Mono',monospace;font-size:11px;">${String(i + 1).padStart(2, '0')}</td>
+      <td>
+        <div class="doc-name">${esc(item.name)}</div>
+        <div class="doc-desc">${esc(item.description)}</div>
+        ${item.conditionNote ? `<div class="doc-condition">If: ${esc(item.conditionNote)}</div>` : ''}
+      </td>
+      <td><span class="status-badge ${item.status}">${item.status}</span></td>
+      <td><span class="cat-badge">${esc(item.category || 'Other')}</span></td>
+      <td><span class="citation-text">${esc(item.citation || '—')}</span></td>
+      <td><select class="priority-select ${prioClass}" onchange="setChecklistPriority(${i}, this.value, this)">
+        <option value="—"${prio==='—'?' selected':''}>—</option>
+        <option value="BLOCKING"${prio==='BLOCKING'?' selected':''}>BLOCKING</option>
+        <option value="HIGH"${prio==='HIGH'?' selected':''}>HIGH</option>
+        <option value="NICE"${prio==='NICE'?' selected':''}>NICE</option>
+      </select></td>
+      <td><button class="row-rm-btn" onclick="removeChecklistItem(${i})" title="Remove">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  tableWrap.classList.add('visible');
+  var addBtn = document.getElementById('addChecklistBtn');
+  if (addBtn) addBtn.classList.add('visible');
+}
+
+// Change 8: set priority on checklist item
+function setChecklistPriority(i, value, selectEl) {
+  if (!window._step2 || !window._step2.items || !window._step2.items[i]) return;
+  window._step2.items[i].priority = value === '—' ? undefined : value;
+  var prioClass = value === 'BLOCKING' ? 'prio-blocking' : value === 'HIGH' ? 'prio-high' : value === 'NICE' ? 'prio-nice' : 'prio-none';
+  selectEl.className = 'priority-select ' + prioClass;
+  saveStep(3, window._step2);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Mock trial data ───────────────────────────────────────────────────────────
+
+const MOCK_STEP1_TEXT = `# Utah Captive Insurance Law — Sports Association Captive Research
+
+## Regulatory Framework
+
+Utah's captive insurance companies are governed by **Title 31A, Chapter 37 (Captive Insurance Companies Act)** and administrative rule **R590-238**. A sports organization would form an **association captive insurance company** — Utah does not recognize a separate "sports captive" category; leagues, athletic associations, and governing bodies qualify as associations under § 31A-37-102.
+
+## Key Statutes — Title 31A, Chapter 37
+
+**Part 2 — Certificate of Authority**
+- § 31A-37-201 — Certificate of Authority (mandatory before doing business)
+- § 31A-37-202 — Permissive Areas of Insurance; amended 2024 (S.B. 31) to allow association captives to write homeowners' insurance with commissioner approval
+- § 31A-37-204 — Paid-in Capital: **$750,000 minimum for association captives**
+- § 31A-37-205 — Free Surplus: $350,000 (mutual) / $500,000 (stock) for association captives
+
+**Part 3 — Requirements**
+- § 31A-37-301 — Formation: commissioner's pre-incorporation certificate required before filing with Secretary of State
+- § 31A-37-302 — Investment Requirements: association captives must comply with Title 31A investment rules
+- § 31A-37-303 — Reinsurance
+
+**Related**
+- § 31A-3-304 — Annual fees: $7,250 + $250 e-commerce; exempt from Title 59 income/premium tax
+
+## Administrative Rule R590-238 (eff. February 9, 2026)
+
+- R590-238-4 — Annual Reporting: association captives use **NAIC Annual Statement Blank**; due March 1
+- R590-238-5 — Annual CPA audit; financials due June 30
+- R590-238-12 — Service providers (manager, CPA, actuary) must be separately DOI-approved
+- R590-238-13 — At least one Utah resident required on board
+- R590-238-17 — Application requirements
+- R590-238-18 — Fees: $200 application (nonrefundable); $5,000 Certificate of Authority on approval
+- R590-238-19 — Authorized forms
+
+## Association Captive vs. Pure Captive
+
+| Feature | Pure Captive | Association Captive |
+|---|---|---|
+| Minimum capital | $250,000 | **$750,000** |
+| Minimum free surplus | $150,000 | $350,000–$500,000 |
+| Investment restrictions | Exempt | Must comply with Title 31A |
+| Annual reporting | Utah captive form | NAIC Annual Statement Blank |
+
+## Required Filing Documents (R590-238-17, § 31A-37-301)
+
+1. Feasibility Study (DOI Feasibility Guideline Form; actuary must be separately approved)
+2. Application to Form a Captive Insurance Company (portal.uid.utah.gov/form-capapp)
+3. Biographical Affidavit — each principal officer, director, manager
+4. Business Plan (lines of coverage, premium projections, loss history, risk program)
+5. Actuarial Supporting Documentation
+6. Pro Forma Financial Statements (3-year projection)
+7. Statement of Economic Benefit to the State of Utah
+8. Articles of Incorporation or Articles of Organization (LLC)
+9. Bylaws (if organized as mutual insurer)
+10. Appointment of Commissioner as Attorney for Service of Process
+11. Bank Capitalization Confirmation ($750,000 deposit or LOC)
+12. CPA Authorization Application (CPA separately approved)
+13. Actuary Certification Application
+
+## Recent Amendments
+
+- **2024 — S.B. 31**: Expanded § 31A-37-202 (homeowners' coverage for association captives); updated § 31A-37-204 capital provisions
+- **2025 — H.B. 23**: Amended § 31A-3-304 (captive restricted account); effective May 7, 2025
+- **R590-238**: Amended effective February 9, 2026
+
+## NAIC References
+
+- **CA-80 Chart**: NAIC comparative captive law tracking (Utah is a recognized domicile)
+- **NAIC Annual Statement Blank**: Mandatory for Utah association captives (R590-238-4)
+- **NAIC Model #305** (Holding Company): Adopted by Utah 2019 (§ 31A-16b)
+- Captive Director: Travis Wegkamp, (801) 957-9235 — insurance.utah.gov/captive`;
+
+const MOCK_STEP2_CHECKLIST = {
+  state: 'Utah',
+  caseType: 'captive insurance in sports',
+  summary: 'Utah association captive insurance companies formed by sports organizations are governed by Title 31A Chapter 37 and Rule R590-238. Minimum paid-in capital is $750,000; the application process requires DOI pre-approval before incorporation, with 20 core filing documents spanning formation, governance, financial, personnel, and compliance categories.',
+  items: [
+    { id:1,  name:'Feasibility Study',                                          description:'Actuarial study demonstrating the financial viability of the proposed captive; must use the DOI Feasibility Guideline Form. Must be prepared by a DOI-approved actuary before the application is submitted.',                                              status:'mandatory',   conditionNote:'', category:'Financial',  citation:'R590-238-17; § 31A-37-301' },
+    { id:2,  name:'Application to Form a Captive Insurance Company',            description:'Primary application filed via portal.uid.utah.gov/form-capapp. Covers lines of coverage, organizational structure, service providers, and ownership. Requires Windows + Chrome.',                                                                           status:'mandatory',   conditionNote:'', category:'Formation',  citation:'R590-238-17; R590-238-19' },
+    { id:3,  name:'Biographical Affidavit',                                     description:'Completed for each principal officer, director, and manager. Covers background, financial standing, and prior regulatory history. One form per individual.',                                                                                               status:'mandatory',   conditionNote:'', category:'Personnel', citation:'R590-238-13; R590-238-17' },
+    { id:4,  name:'Business Plan',                                              description:'Comprehensive plan covering lines of coverage to be written, premium projections for 3–5 years, historical loss data, reinsurance structure, and risk management program.',                                                                                  status:'mandatory',   conditionNote:'', category:'Formation',  citation:'R590-238-17' },
+    { id:5,  name:'Pro Forma Financial Statements',                             description:'Projected balance sheets and income statements for at least three years, with supporting assumptions and actuarial basis.',                                                                                                                                  status:'mandatory',   conditionNote:'', category:'Financial',  citation:'R590-238-17' },
+    { id:6,  name:'Statement of Economic Benefit to Utah',                      description:'Explains how the captive benefits Utah\'s economy. Required at application and re-filed annually with the annual report.',                                                                                                                                  status:'mandatory',   conditionNote:'', category:'Compliance', citation:'R590-238-17' },
+    { id:7,  name:'Articles of Incorporation',                                  description:'Filed with the Utah Division of Corporations after receiving the commissioner\'s pre-incorporation certificate. Must include at least 3 incorporators, one Utah resident.',                                                                                  status:'mandatory',   conditionNote:'', category:'Formation',  citation:'§ 31A-37-301; Utah Code 16-10a' },
+    { id:8,  name:'Bylaws',                                                     description:'Governing bylaws. For association captives organized as mutual insurers, the governing body must be elected by member organizations.',                                                                                                                       status:'mandatory',   conditionNote:'', category:'Governance', citation:'§ 31A-37-102; R590-238-17' },
+    { id:9,  name:'Appointment of Commissioner as Attorney for Service of Process', description:'Designates the Utah Insurance Commissioner as registered agent for service of process. Required for all captive applicants.',                                                                                                                           status:'mandatory',   conditionNote:'', category:'Compliance', citation:'§ 31A-37-301; R590-238-17' },
+    { id:10, name:'Bank Capitalization Confirmation',                           description:'Letter from a qualified bank confirming that the minimum $750,000 paid-in capital has been deposited. An irrevocable letter of credit is an accepted alternative.',                                                                                         status:'mandatory',   conditionNote:'', category:'Financial',  citation:'§ 31A-37-204; R590-238-17' },
+    { id:11, name:'Irrevocable Letter of Credit',                               description:'Utah DOI-approved LOC from a qualified financial institution, used in lieu of a cash capital deposit to meet the $750,000 minimum capital requirement.',                                                                                                    status:'conditional', conditionNote:'Required only if using LOC instead of cash to satisfy the $750,000 capital requirement', category:'Financial',  citation:'§ 31A-37-204; R590-238-18' },
+    { id:12, name:'CPA Authorization Application',                              description:'Application to certify the independent CPA who will perform the mandatory annual audit. CPA must be separately approved by the commissioner before the captive may operate.',                                                                               status:'mandatory',   conditionNote:'', category:'Compliance', citation:'R590-238-5; R590-238-6; R590-238-17' },
+    { id:13, name:'Actuary Certification Application',                          description:'Application to certify the loss and expense actuary. The actuary must be individually approved; their opinion is filed with the annual NAIC statement.',                                                                                                    status:'mandatory',   conditionNote:'', category:'Compliance', citation:'R590-238-4; R590-238-17' },
+    { id:14, name:'Membership Agreement',                                       description:'Agreement governing the relationship between the association captive and its member sports organizations. Defines eligibility criteria, premium terms, coverage access, withdrawal conditions, and indemnification.',                                         status:'mandatory',   conditionNote:'', category:'Governance', citation:'§ 31A-37-102; § 31A-37-202' },
+    { id:15, name:'Investment Policy Statement',                                description:'Written investment policy for the captive\'s assets. Association captives must comply with Title 31A investment restrictions. Must cover asset classes, prohibited investments, and custodian arrangement.',                                                  status:'mandatory',   conditionNote:'', category:'Financial',  citation:'§ 31A-37-302; Title 31A Chapter 18' },
+    { id:16, name:'Reinsurance Exhibit',                                        description:'Utah DOI Captive Insurance Company Reinsurance Exhibit detailing proposed reinsurance program: carriers, treaty structure, retention levels, and cedent obligations.',                                                                                       status:'conditional', conditionNote:'Required if the captive will purchase reinsurance; strongly recommended for association captives writing sports liability', category:'Financial',  citation:'§ 31A-37-303; R590-238-11' },
+    { id:17, name:'Articles of Organization (LLC)',                             description:'Alternative formation document if the captive is organized as an LLC rather than a corporation. Filed with the Secretary of State after commissioner pre-approval.',                                                                                         status:'conditional', conditionNote:'Required only if the captive is organized as an LLC rather than a stock or mutual corporation', category:'Formation',  citation:'§ 31A-37-301; Utah Code 48-3a' },
+    { id:18, name:'Operating Agreement (LLC)',                                  description:'Governing document for LLC-structured captives defining member rights, manager authority, and operating procedures.',                                                                                                                                         status:'conditional', conditionNote:'Required only if captive is organized as an LLC', category:'Governance', citation:'§ 31A-37-301; Utah Code 48-3a' },
+    { id:19, name:'Certificate of Organization',                                description:'State-issued certificate confirming legal formation of the captive entity. Obtained from the Utah Division of Corporations following commissioner pre-approval.',                                                                                            status:'mandatory',   conditionNote:'', category:'Formation',  citation:'§ 31A-37-301' },
+    { id:20, name:'NAIC Annual Statement Blank',                                description:'Annual financial filing using the NAIC-standard blank (not the Utah proprietary captive form). Due March 1 each year post-licensing. Includes Statement of Actuarial Opinion.',                                                                             status:'mandatory',   conditionNote:'', category:'Compliance', citation:'R590-238-4' },
+  ]
+};
+
+function runMockStep1() {
+  // Reset downstream data for a clean mock run
+  window._step1 = { state: '', caseType: '', text: '', terms: [] };
+  window._step2 = undefined;
+  window._step4 = { matches: null };
+  window._step5 = { docs: null, _items: null };
+  var serffRow = document.getElementById('serffTermsRow');
+  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  document.getElementById('checklistInput').value = '';
+  document.getElementById('checklistSummary').classList.remove('visible');
+  document.getElementById('checklistTableWrap').classList.remove('visible');
+  document.getElementById('checklistTableBody').innerHTML = '';
+  document.getElementById('checklistStatus').textContent = '';
+  var hint = document.getElementById('checklistHint');
+  if (hint) { hint.textContent = 'Paste legislation text below, or run Step 01 first to auto-fill.'; hint.className = 'checklist-hint'; }
+  var rmw = document.getElementById('repoMatchWrap');
+  if (rmw) rmw.classList.remove('visible');
+  // Don't clear repo selection — it persists across searches
+
+  // Ensure panel is open
+  if (!document.getElementById('researchPanel').classList.contains('open')) togglePanel();
+
+  // Set inputs
+  const sel = document.getElementById('stateSelect');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === 'Utah') { sel.selectedIndex = i; break; }
+  }
+  document.getElementById('caseTypeInput').value = 'captive insurance in sports';
+
+  // Simulate running status then show result
+  const statusEl = document.getElementById('researchStatus');
+  const resultEl = document.getElementById('researchResult');
+  const btn = document.getElementById('runBtn');
+
+  btn.disabled = true;
+  resultEl.innerHTML = '';
+  resultEl.classList.remove('visible');
+  statusEl.className = 'research-status active';
+  statusEl.textContent = 'Searching Utah DOI and NAIC for "captive insurance in sports" statutes...';
+
+  setTimeout(() => {
+    statusEl.textContent = 'Reading Title 31A Chapter 37 and Rule R590-238...';
+  }, 600);
+  setTimeout(() => {
+    statusEl.textContent = 'Extracting filing requirements...';
+  }, 1200);
+  setTimeout(() => {
+    resultEl.innerHTML = mdToHtml(MOCK_STEP1_TEXT);
+    resultEl.classList.add('visible');
+    statusEl.textContent = 'Done. [MOCK — Utah DOI + NAIC sources]';
+    statusEl.className = 'research-status';
+    btn.disabled = false;
+
+    window._step1.text = MOCK_STEP1_TEXT;
+    window._step1.state = 'Utah';
+    window._step1.caseType = 'captive insurance in sports';
+    notifyStep2Ready();
+    renderSerffTerms(MOCK_SERFF_TERMS);
+    saveStep(1, window._step1);
+  }, 1800);
+}
+
+function runMockStep2() {
+  // Ensure panel is open
+  if (!document.getElementById('checklistPanel').classList.contains('open')) togglePanel2();
+
+  const statusEl = document.getElementById('checklistStatus');
+  const summaryEl = document.getElementById('checklistSummary');
+  const tableWrap = document.getElementById('checklistTableWrap');
+  const tbody = document.getElementById('checklistTableBody');
+  const btn = document.getElementById('checklistBtn');
+
+  // Pre-fill input if empty
+  if (!document.getElementById('checklistInput').value && window._step1.text) {
+    notifyStep2Ready();
+  }
+
+  btn.disabled = true;
+  summaryEl.classList.remove('visible');
+  tableWrap.classList.remove('visible');
+  tbody.innerHTML = '';
+  statusEl.className = 'checklist-status active';
+  statusEl.textContent = 'Parsing statutes and extracting filing requirements...';
+
+  setTimeout(() => {
+    statusEl.textContent = 'Classifying documents by status and category...';
+  }, 700);
+  setTimeout(() => {
+    renderChecklist(MOCK_STEP2_CHECKLIST, summaryEl, tbody, tableWrap);
+    statusEl.textContent = `Done — ${MOCK_STEP2_CHECKLIST.items.length} documents identified. [MOCK — Utah DOI R590-238]`;
+    statusEl.className = 'checklist-status';
+    btn.disabled = false;
+    window._step2 = MOCK_STEP2_CHECKLIST;
+    saveStep(3, window._step2);
+    checkStepLocks();
+  }, 1400);
+}
+
+// ── Step 03 ──────────────────────────────────────────────────────────────────
+
+window._step3 = { filename: '', content: '', score: null };
+
+function toggleOption(id) {
+  const ids = ['2A', '2B', '2C'];
+  const panel = document.getElementById('panel' + id);
+  const card  = document.getElementById('card' + id);
+  const isOpen = panel.classList.contains('open');
+
+  // Close all
+  ids.forEach(function(x) {
+    var p = document.getElementById('panel' + x);
+    var c = document.getElementById('card' + x);
+    var btn = c ? c.querySelector('.mock-btn:last-child') : null;
+    if (p) p.classList.remove('open');
+    if (c) c.classList.remove('active');
+    if (btn) btn.textContent = 'SELECT / EXPAND ▾';
+  });
+
+  // Open selected if it was closed
+  if (!isOpen) {
+    panel.classList.add('open');
+    card.classList.add('active');
+    var expandBtn = card.querySelector('.mock-btn:last-child');
+    if (expandBtn) expandBtn.textContent = 'COLLAPSE ▴';
+  }
+}
+
+function handleFileSelect(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  window._step3.filename = file.name;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    window._step3.content = e.target.result;
+    var fn = document.getElementById('uploadFilename');
+    fn.textContent = file.name;
+    fn.classList.add('visible');
+    document.getElementById('scoreUploadBtn').disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+function handleFileDrop(event) {
+  event.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  var file = event.dataTransfer.files[0];
+  if (!file) return;
+  window._step3.filename = file.name;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    window._step3.content = e.target.result;
+    var fn = document.getElementById('uploadFilename');
+    fn.textContent = file.name;
+    fn.classList.add('visible');
+    document.getElementById('scoreUploadBtn').disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+function scoreUpload() {
+  submitToScorer(window._step3.content, '2A — Upload', '#status2A');
+}
+
+function scoreManual() {
+  var text = document.getElementById('manualInput').value.trim();
+  if (!text) {
+    var s = document.getElementById('status2C');
+    s.textContent = 'Please enter some text first.';
+    s.className = 'opt-status error';
+    return;
+  }
+  submitToScorer(text, '2C — Manual', '#status2C');
+}
+
+async function submitToScorer(content, source, statusSelector) {
+  var statusEl = document.querySelector(statusSelector);
+  var card = document.getElementById('scorerCard');
+
+  if (statusEl) {
+    statusEl.textContent = 'Connecting...';
+    statusEl.className = 'opt-status active';
+  }
+
+  card.classList.remove('idle', 'loaded');
+  card.classList.add('loading');
+  document.getElementById('scorerStatus').textContent = 'Scoring document...';
+  document.getElementById('scorerStatus').style.display = 'block';
+  document.getElementById('scorerGrid').style.display = 'none';
+
+  try {
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/serff-quality-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: content, source: source, apiKey: settings.apiKey, model: settings.model }),
+    });
+
+    if (!resp.ok) throw new Error('Server error: ' + resp.status);
+
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+
+    while (true) {
+      var _ref = await reader.read();
+      var done = _ref.done;
+      var value = _ref.value;
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line.startsWith('data: ')) continue;
+        try {
+          var msg = JSON.parse(line.slice(6));
+          if (msg.type === 'status') {
+            if (statusEl) statusEl.textContent = msg.message;
+            document.getElementById('scorerStatus').textContent = msg.message;
+          } else if (msg.type === 'result') {
+            if (statusEl) { statusEl.textContent = 'Done.'; statusEl.className = 'opt-status done'; }
+            animateScorer(msg.score);
+          } else if (msg.type === 'error') {
+            if (statusEl) { statusEl.textContent = 'Error: ' + msg.message; statusEl.className = 'opt-status error'; }
+            card.classList.remove('loading');
+            card.classList.add('idle');
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(err) {
+    if (statusEl) { statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'opt-status error'; }
+    card.classList.remove('loading');
+    card.classList.add('idle');
+  }
+}
+
+const MOCK_SCORE = {
+  gates: {
+    parseable: { pass: true,  value: 'XML — SERFF transmittal' },
+    approved:  { pass: true,  value: 'Not withdrawn' },
+    currency:  { pass: true,  value: 'Post-amendment 2024' }
+  },
+  scores: {
+    completeness:     { weight: 30, score: 72 },
+    generalizability: { weight: 25, score: 58 },
+    clarity:          { weight: 25, score: 76 },
+    precedent:        { weight: 20, score: 50 }
+  },
+  composite: 65,
+  tier: 'B',
+  tierLabel: 'Reference Model',
+  tierNote: 'Structurally sound — all required sections present. Agent will handle state-specific field adaptation and missing endorsement schedules in Step 5.'
+};
+
+function runMockStep3(option) {
+  // Open the selected option panel
+  toggleOption(option);
+
+  var statusSel = '#status2' + option.slice(-1);
+  var statusEl = document.querySelector(statusSel);
+  var card = document.getElementById('scorerCard');
+
+  if (statusEl) {
+    statusEl.textContent = 'Preparing mock data...';
+    statusEl.className = 'opt-status active';
+  }
+
+  card.classList.remove('idle', 'loaded');
+  card.classList.add('loading');
+  document.getElementById('scorerStatus').textContent = 'Evaluating document quality...';
+  document.getElementById('scorerStatus').style.display = 'block';
+  document.getElementById('scorerGrid').style.display = 'none';
+
+  setTimeout(function() {
+    if (statusEl) statusEl.textContent = 'Checking hard gates...';
+    document.getElementById('scorerStatus').textContent = 'Checking hard gates...';
+  }, 400);
+
+  setTimeout(function() {
+    if (statusEl) statusEl.textContent = 'Scoring dimensions...';
+    document.getElementById('scorerStatus').textContent = 'Scoring dimensions...';
+  }, 900);
+
+  setTimeout(function() {
+    if (statusEl) { statusEl.textContent = 'Done. [MOCK]'; statusEl.className = 'opt-status done'; }
+    animateScorer(MOCK_SCORE);
+  }, 1500);
+}
+
+function animateScorer(data) {
+  var card = document.getElementById('scorerCard');
+  card.classList.remove('idle', 'loading');
+  card.classList.add('loaded');
+
+  document.getElementById('scorerStatus').style.display = 'none';
+  document.getElementById('scorerGrid').style.display = '';
+
+  // Gates
+  var gateMap = {
+    parseable: 'parseable',
+    approved:  'approved',
+    currency:  'currency'
+  };
+  Object.keys(gateMap).forEach(function(key) {
+    var g = data.gates[key];
+    var dot  = document.getElementById('gate-' + key + '-dot');
+    var name = document.getElementById('gate-' + key + '-name');
+    var val  = document.getElementById('gate-' + key + '-val');
+    if (dot)  { dot.className  = 'gate-dot '  + (g.pass ? 'pass' : 'fail'); }
+    if (name) { name.className = 'gate-name'  + (g.pass ? '' : ' fail'); }
+    if (val)  { val.textContent = g.value; }
+  });
+
+  // Dimensions
+  var dimMap = {
+    completeness:     'completeness',
+    generalizability: 'generalizability',
+    clarity:          'clarity',
+    precedent:        'precedent'
+  };
+  Object.keys(dimMap).forEach(function(key) {
+    var s = data.scores[key];
+    var pct = s.score + '%';
+    document.getElementById('score-' + key).textContent = s.score;
+    document.getElementById('fill-'  + key).style.width = pct;
+    document.getElementById('thumb-' + key).style.left  = pct;
+  });
+
+  // Composite counter
+  var composite = data.composite;
+  var start = 0;
+  var duration = 800;
+  var startTime = null;
+  var el = document.getElementById('compositeScore');
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    el.textContent = Math.round(progress * composite);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  // Tier bar
+  document.getElementById('tierBarFill').style.width = composite + '%';
+
+  // Tier label
+  document.getElementById('tierLabelText').textContent = 'Tier ' + data.tier + ' \u2014 ' + data.tierLabel;
+
+  // Tier note
+  document.getElementById('tierNote').textContent = data.tierNote;
+
+  // Points breakdown
+  var dims = ['completeness', 'generalizability', 'clarity', 'precedent'];
+  var ptIds = {
+    completeness:     'pts-completeness',
+    generalizability: 'pts-generalizability',
+    clarity:          'pts-clarity',
+    precedent:        'pts-precedent'
+  };
+  dims.forEach(function(key) {
+    var s = data.scores[key];
+    var pts = Math.round((s.score * s.weight / 100) * 10) / 10;
+    document.getElementById(ptIds[key]).textContent = pts + ' pts';
+  });
+  document.getElementById('pts-total').textContent = composite + ' pts';
+
+  window._step3.score = data;
+  saveStep(2, { filename: window._step3.filename, score: data });
+}
+
+
+
+// ── Step 04 ──────────────────────────────────────────────────────────────────
+
+window._step4 = { matches: null };
+
+function togglePanel4() {
+  var panel = document.getElementById('matchPanel');
+  var btn = document.getElementById('expandBtn4');
+  var open = panel.classList.toggle('open');
+  btn.textContent = open ? 'CLOSE ✕' : 'RUN ›';
+  if (open) updateMatchSources();
+}
+
+function updateMatchSources() {
+  var src2 = document.getElementById('matchSrc2');
+  var src3 = document.getElementById('matchSrc3');
+  src2.textContent = (window._step2 && window._step2.items)
+    ? window._step2.items.length + ' requirements (' + (window._step2.state || '?') + ')'
+    : 'Run Step 03 first';
+  src3.textContent = (window._step3 && window._step3.score)
+    ? 'Tier ' + window._step3.score.tier + ' — ' + window._step3.score.tierLabel
+    : 'Run Step 02 first';
+}
+
+async function runMatch() {
+  var statusEl = document.getElementById('matchStatus');
+  var btn = document.getElementById('matchRunBtn');
+  if (!window._step2 || !window._step2.items) {
+    statusEl.textContent = 'Complete Step 03 (checklist) first to get requirements.';
+    statusEl.className = 'match-status error'; return;
+  }
+  statusEl.textContent = 'Connecting...';
+  statusEl.className = 'match-status active';
+  btn.disabled = true;
+
+  try {
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/match-requirements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requirements: window._step2.items,
+        document: window._step3.content || '',
+        state: window._step2.state,
+        apiKey: settings.apiKey, model: settings.model,
+      }),
+    });
+    if (!resp.ok) throw new Error('Server error: ' + resp.status);
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    while (true) {
+      var ref = await reader.read();
+      if (ref.done) break;
+      buffer += decoder.decode(ref.value, { stream: true });
+      var lines = buffer.split('\n'); buffer = lines.pop();
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line.startsWith('data: ')) continue;
+        try {
+          var msg = JSON.parse(line.slice(6));
+          if (msg.type === 'status') { statusEl.textContent = msg.message; }
+          else if (msg.type === 'result') { renderMatches(msg.matches); statusEl.textContent = 'Done.'; statusEl.className = 'match-status'; }
+          else if (msg.type === 'error') { statusEl.textContent = 'Error: ' + msg.message; statusEl.className = 'match-status error'; }
+        } catch(e) {}
+      }
+    }
+  } catch(err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'match-status error';
+  } finally { btn.disabled = false; }
+}
+
+function renderMatches(data) {
+  var items = data.items || [];
+  var covered = items.filter(function(i) { return i.status === 'covered'; }).length;
+  var partial  = items.filter(function(i) { return i.status === 'partial'; }).length;
+  var gap      = items.filter(function(i) { return i.status === 'gap'; }).length;
+  var covPct   = items.length ? Math.round((covered + partial * 0.5) / items.length * 100) : 0;
+
+  document.getElementById('matchCoveragePct').textContent = covPct + '%';
+  document.getElementById('matchCoveredN').textContent = covered;
+  document.getElementById('matchPartialN').textContent = partial;
+  document.getElementById('matchGapN').textContent = gap;
+  document.getElementById('matchSummaryBar').classList.add('visible');
+
+  var tbody = document.getElementById('matchTableBody');
+  tbody.innerHTML = items.map(function(item, i) {
+    var pct = item.similarity;
+    var cls = item.status;
+    return '<tr>' +
+      '<td style="color:#5a6a7a;font-family:\'JetBrains Mono\',monospace;font-size:11px;">' + String(i+1).padStart(2,'0') + '</td>' +
+      '<td style="font-weight:600;color:#e8ecf4;max-width:200px;">' + esc(item.name) + '</td>' +
+      '<td><div class="sim-bar-wrap"><div class="sim-bar-track"><div class="sim-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div><span class="sim-pct">' + pct + '%</span></div></td>' +
+      '<td><span class="match-badge ' + cls + '">' + cls + '</span></td>' +
+      '<td><span class="match-section-text">' + esc(item.section || '—') + '</span></td>' +
+      '<td><button class="row-rm-btn" onclick="removeMatchItem(' + i + ')" title="Remove">✕</button></td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('matchTableWrap').classList.add('visible');
+  var addBtn = document.getElementById('addMatchBtn');
+  if (addBtn) addBtn.classList.add('visible');
+  window._step4.matches = data;
+  saveStep(4, window._step4);
+  // notify step5 source pill
+  var s4 = document.getElementById('agentSrc4');
+  if (s4) s4.textContent = data.items.length + ' requirements matched';
+}
+
+const MOCK_STEP4 = {
+  items: [
+    { name: 'Feasibility Study',                          similarity: 38, status: 'gap',     section: 'Not found — actuarial study absent from SERFF transmittal' },
+    { name: 'Application to Form a Captive',              similarity: 61, status: 'partial',  section: 'Transmittal cover page — partial applicant data' },
+    { name: 'Biographical Affidavit',                     similarity: 82, status: 'covered',  section: 'Section 4 — Officers & Directors Background' },
+    { name: 'Business Plan',                              similarity: 79, status: 'covered',  section: 'Section 2 — Business Purpose & Coverage Description' },
+    { name: 'Pro Forma Financial Statements',             similarity: 74, status: 'partial',  section: 'Exhibit B — Financial Projections (1-yr only, 3-yr required)' },
+    { name: 'Statement of Economic Benefit to Utah',      similarity: 22, status: 'gap',      section: 'Not found — no Utah economic benefit narrative present' },
+    { name: 'Articles of Incorporation',                  similarity: 88, status: 'covered',  section: 'Exhibit A — Articles of Incorporation (Utah, 2023)' },
+    { name: 'Bylaws',                                     similarity: 85, status: 'covered',  section: 'Exhibit C — Corporate Bylaws' },
+    { name: 'Appointment of Commissioner as Attorney',    similarity: 56, status: 'partial',  section: 'Section 7 — Registered Agent (generic, not Utah-specific)' },
+    { name: 'Bank Capitalization Confirmation',           similarity: 31, status: 'gap',      section: 'Not found — no bank letter or LOC attached' },
+    { name: 'Irrevocable Letter of Credit',               similarity: 28, status: 'gap',      section: 'Not found — conditional item, not required if cash deposit used' },
+    { name: 'CPA Authorization Application',              similarity: 63, status: 'partial',  section: 'Section 9 — Auditor Details (CPA named, approval form missing)' },
+    { name: 'Actuary Certification Application',          similarity: 58, status: 'partial',  section: 'Section 8 — Actuarial Opinion (actuary named, cert form missing)' },
+    { name: 'Membership Agreement',                       similarity: 91, status: 'covered',  section: 'Exhibit D — Association Membership Agreement' },
+    { name: 'Investment Policy Statement',                similarity: 77, status: 'covered',  section: 'Section 5 — Investment Policy & Asset Allocation' },
+    { name: 'Reinsurance Exhibit',                        similarity: 66, status: 'partial',  section: 'Section 6 — Reinsurance (carrier listed, treaty form absent)' },
+    { name: 'Articles of Organization (LLC)',             similarity: 19, status: 'gap',      section: 'N/A — captive is incorporated, not LLC' },
+    { name: 'Operating Agreement (LLC)',                  similarity: 17, status: 'gap',      section: 'N/A — captive is incorporated, not LLC' },
+    { name: 'Certificate of Organization',                similarity: 71, status: 'partial',  section: 'Exhibit A — Articles filed, state cert not yet issued' },
+    { name: 'NAIC Annual Statement Blank',                similarity: 54, status: 'partial',  section: 'Exhibit E — Prior-year statement (format pre-2023 blank)' },
+  ]
+};
+
+function runMockStep4() {
+  if (!document.getElementById('matchPanel').classList.contains('open')) togglePanel4();
+
+  var statusEl = document.getElementById('matchStatus');
+  var btn = document.getElementById('matchRunBtn');
+
+  // Inject mock step2 if not yet run
+  if (!window._step2) window._step2 = MOCK_STEP2_CHECKLIST;
+
+  updateMatchSources();
+  document.getElementById('matchSummaryBar').classList.remove('visible');
+  document.getElementById('matchTableWrap').classList.remove('visible');
+  document.getElementById('matchTableBody').innerHTML = '';
+
+  btn.disabled = true;
+  statusEl.className = 'match-status active';
+  statusEl.textContent = 'Embedding 20 requirements into vector space...';
+
+  setTimeout(function() { statusEl.textContent = 'Chunking SERFF document...'; }, 500);
+  setTimeout(function() { statusEl.textContent = 'Running cosine similarity...'; }, 1100);
+  setTimeout(function() { statusEl.textContent = 'Classifying coverage gaps...'; }, 1700);
+  setTimeout(function() {
+    renderMatches(MOCK_STEP4);
+    statusEl.textContent = 'Done — 20 requirements evaluated. [MOCK]';
+    statusEl.className = 'match-status';
+    btn.disabled = false;
+  }, 2300);
+}
+
+// ── Step 05 ──────────────────────────────────────────────────────────────────
+
+window._step5 = { docs: null };
+
+function togglePanel5() {
+  var panel = document.getElementById('agentPanel');
+  var btn = document.getElementById('expandBtn5');
+  var open = panel.classList.toggle('open');
+  btn.textContent = open ? 'CLOSE ✕' : 'RUN ›';
+  if (open) updateAgentSources();
+}
+
+function updateAgentSources() {
+  var s1 = document.getElementById('agentSrc1');
+  var s2 = document.getElementById('agentSrc2');
+  var s4 = document.getElementById('agentSrc4');
+  s1.textContent = window._step1.state ? window._step1.state + ' — legislation loaded' : 'Run Step 01 first';
+  s2.textContent = (window._step2 && window._step2.items) ? window._step2.items.length + ' requirements (' + (window._step2.state || '?') + ')' : 'Run Step 03 first';
+  s4.textContent = (window._step4 && window._step4.matches) ? window._step4.matches.items.length + ' requirements matched' : 'Run Step 04 first';
+}
+
+function logLine(cls, ts, msg) {
+  var log = document.getElementById('agentLog');
+  log.classList.add('visible');
+  var line = document.createElement('div');
+  line.innerHTML = '<span class="log-ts">' + ts + '</span><span class="' + cls + '">' + msg + '</span>';
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function runAgent() {
+  var statusEl = document.getElementById('agentStatus');
+  var btn = document.getElementById('agentRunBtn');
+  if (!window._step2 || !window._step2.items) {
+    statusEl.textContent = 'Complete Step 03 first (or run MOCK ▸ there).'; statusEl.className = 'match-status error'; return;
+  }
+  statusEl.textContent = 'Connecting...'; statusEl.className = 'match-status active';
+  btn.disabled = true;
+  document.getElementById('agentLog').innerHTML = '';
+  document.getElementById('agentLog').classList.remove('visible');
+  document.getElementById('agentSummaryBar').classList.remove('visible');
+  document.getElementById('agentTableWrap').classList.remove('visible');
+
+  try {
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/generate-documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requirements: window._step2.items,
+        matches: window._step4.matches ? window._step4.matches.items : [],
+        legislation: window._step1.text || '',
+        state: window._step2.state,
+        apiKey: settings.apiKey, model: settings.model,
+      }),
+    });
+    if (!resp.ok) throw new Error('Server error: ' + resp.status);
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    while (true) {
+      var ref = await reader.read();
+      if (ref.done) break;
+      buffer += decoder.decode(ref.value, { stream: true });
+      var lines = buffer.split('\n'); buffer = lines.pop();
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line.startsWith('data: ')) continue;
+        try {
+          var msg = JSON.parse(line.slice(6));
+          if (msg.type === 'status') { statusEl.textContent = msg.message; }
+          else if (msg.type === 'log') { logLine('log-' + (msg.action || 'status'), msg.ts || '', msg.message); }
+          else if (msg.type === 'result') { renderAgentDocs(msg.docs); statusEl.textContent = 'Done.'; statusEl.className = 'match-status'; }
+          else if (msg.type === 'error') { statusEl.textContent = 'Error: ' + msg.message; statusEl.className = 'match-status error'; }
+        } catch(e) {}
+      }
+    }
+  } catch(err) {
+    statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'match-status error';
+  } finally { btn.disabled = false; }
+}
+
+function renderAgentDocs(data) {
+  var items = data.items || [];
+  var adopted   = items.filter(function(i) { return i.action === 'adopted'; }).length;
+  var adapted   = items.filter(function(i) { return i.action === 'adapted'; }).length;
+  var generated = items.filter(function(i) { return i.action === 'generated'; }).length;
+  var skipped   = items.filter(function(i) { return i.action === 'skipped'; }).length;
+  var docs = adopted + adapted + generated;
+
+  document.getElementById('agentAdoptedN').textContent   = adopted;
+  document.getElementById('agentAdaptedN').textContent   = adapted;
+  document.getElementById('agentGeneratedN').textContent = generated;
+  document.getElementById('agentSkippedN').textContent   = skipped;
+  document.getElementById('agentSummaryNote').textContent = docs + ' documents ready — review before compiling.';
+  document.getElementById('agentSummaryBar').classList.add('visible');
+
+  var pkgBtn = document.getElementById('pkgBtn');
+  pkgBtn.classList.add('ready');
+  pkgBtn.textContent = 'COMPILE PACKAGE (' + docs + ' docs)';
+
+  // Store items on window for download access
+  window._step5._items = items;
+
+  var tbody = document.getElementById('agentTableBody');
+  tbody.innerHTML = items.map(function(item, i) {
+    var isSkip = item.action === 'skipped';
+    var dlCell = isSkip
+      ? '<td style="display:flex;gap:4px;align-items:center;"><span style="color:#3a4a5a;font-size:10px;flex:1">—</span><button class="row-rm-btn" onclick="removeAgentDoc(' + i + ')" title="Remove">✕</button></td>'
+      : '<td style="display:flex;gap:4px;align-items:center;"><button class="dl-btn" id="dlBtn' + i + '" onclick="downloadDoc(' + i + ')" title="Generate & download ' + esc(item.output) + '">⬇ GET</button><button class="row-rm-btn" onclick="removeAgentDoc(' + i + ')" title="Remove">✕</button></td>';
+    return '<tr>' +
+      '<td style="color:#5a6a7a;font-family:\'JetBrains Mono\',monospace;font-size:11px;">' + String(i+1).padStart(2,'0') + '</td>' +
+      '<td style="font-weight:600;color:#e8ecf4;max-width:180px;">' + esc(item.name) + '</td>' +
+      '<td><span class="action-badge ' + item.action + '">' + item.action + '</span></td>' +
+      '<td><span class="agent-note-text">' + esc(item.note) + '</span></td>' +
+      '<td><span class="output-filename' + (isSkip ? ' na' : '') + '">' + esc(item.output) + '</span></td>' +
+      dlCell +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('agentTableWrap').classList.add('visible');
+  var dlAllBtn = document.getElementById('dlAllBtn');
+  if (dlAllBtn) dlAllBtn.style.display = docs > 0 ? '' : 'none';
+  var dlZipBtn = document.getElementById('dlZipBtn');
+  if (dlZipBtn) dlZipBtn.style.display = docs > 0 ? '' : 'none';
+  var addBtn = document.getElementById('addAgentDocBtn');
+  if (addBtn) addBtn.classList.add('visible');
+
+  window._step5.docs = data;
+  saveStep(5, window._step5);
+}
+
+const MOCK_STEP5 = { items: [
+  { name: 'Feasibility Study',                       action: 'generated', note: 'Generated actuarial outline from R590-238-17. Requires licensed actuary signature before filing.', output: 'SEIC_FeasibilityStudy_Draft.docx' },
+  { name: 'Application to Form a Captive',           action: 'adapted',   note: 'Adapted SERFF cover page → Utah portal format. Added association captive fields and NAIC codes.', output: 'SEIC_Application_Draft.docx' },
+  { name: 'Biographical Affidavit',                  action: 'adopted',   note: 'Adopted from SERFF Section 4. All required fields present for 4 officers.', output: 'SEIC_BioAffidavit_x4.docx' },
+  { name: 'Business Plan',                           action: 'adopted',   note: 'Adopted from SERFF Section 2. Lines of coverage, premiums, and risk program included.', output: 'SEIC_BusinessPlan.docx' },
+  { name: 'Pro Forma Financial Statements',          action: 'adapted',   note: 'Extended Exhibit B from 1-year to 3-year projection per R590-238-17 requirement.', output: 'SEIC_ProForma_3yr.xlsx' },
+  { name: 'Statement of Economic Benefit to Utah',   action: 'generated', note: 'No reference section found. Drafted Utah economic impact narrative from association size and premium volume.', output: 'SEIC_EconomicBenefit.docx' },
+  { name: 'Articles of Incorporation',               action: 'adopted',   note: 'Adopted from SERFF Exhibit A verbatim. Utah-compliant, filed 2023.', output: 'SEIC_Articles_Inc.docx' },
+  { name: 'Bylaws',                                  action: 'adopted',   note: 'Adopted from SERFF Exhibit C. Board election provisions match association captive rules.', output: 'SEIC_Bylaws.docx' },
+  { name: 'Appointment of Commissioner as Attorney', action: 'adapted',   note: 'Adapted generic registered agent clause to Utah DOI commissioner appointment form (§ 31A-37-301).', output: 'SEIC_AppointmentCommissioner.docx' },
+  { name: 'Bank Capitalization Confirmation',        action: 'generated', note: 'Template generated — blank bank confirmation letter for $750,000 deposit. Must be executed by depository institution.', output: 'SEIC_CapitalizationLetter_Template.docx' },
+  { name: 'Irrevocable Letter of Credit',            action: 'skipped',   note: 'N/A — captive using cash deposit. LOC not required.', output: '—' },
+  { name: 'CPA Authorization Application',           action: 'adapted',   note: 'Adapted Section 9 auditor details to Utah DOI CPA Authorization form. CPA name pre-filled.', output: 'SEIC_CPAAuthorization.docx' },
+  { name: 'Actuary Certification Application',       action: 'adapted',   note: 'Adapted Section 8 actuary details to Utah DOI form. Opinion to be attached post-feasibility study.', output: 'SEIC_ActuaryCertification.docx' },
+  { name: 'Membership Agreement',                    action: 'adopted',   note: 'Adopted from SERFF Exhibit D. Association membership terms fully present.', output: 'SEIC_MembershipAgreement.docx' },
+  { name: 'Investment Policy Statement',             action: 'adopted',   note: 'Adopted from SERFF Section 5. Complies with Title 31A Chapter 18 asset restrictions.', output: 'SEIC_InvestmentPolicy.docx' },
+  { name: 'Reinsurance Exhibit',                     action: 'adapted',   note: 'Adapted Section 6 to Utah DOI Captive Reinsurance Exhibit format. Treaty form placeholder inserted.', output: 'SEIC_ReinsuranceExhibit.docx' },
+  { name: 'Articles of Organization (LLC)',          action: 'skipped',   note: 'N/A — captive organized as corporation, not LLC.', output: '—' },
+  { name: 'Operating Agreement (LLC)',               action: 'skipped',   note: 'N/A — captive organized as corporation, not LLC.', output: '—' },
+  { name: 'Certificate of Organization',             action: 'adapted',   note: 'Adapted Articles filing confirmation. Placeholder for Division of Corporations certificate issuance.', output: 'SEIC_CertificateOrg_Pending.docx' },
+  { name: 'NAIC Annual Statement Blank',             action: 'generated', note: 'NAIC Annual Statement template with pre-filled entity header. Financial data entry required post-first year.', output: 'SEIC_NAICAnnualStatement_Template.xlsx' },
+]};
+
+var AGENT_LOG_LINES = [
+  ['log-status',    '[00:00]', 'Initializing agent — Utah captive insurance in sports'],
+  ['log-status',    '[00:01]', 'Loading Step 03 checklist — 20 requirements'],
+  ['log-status',    '[00:02]', 'Loading Step 04 match results — 6 covered, 7 partial, 7 gaps'],
+  ['log-status',    '[00:03]', 'Loading Step 01 legislation — Title 31A Chapter 37, R590-238'],
+  ['log-generated', '[00:04]', '→ GENERATED  Feasibility Study (no reference — drafted from R590-238-17)'],
+  ['log-adapted',   '[00:05]', '→ ADAPTED    Application to Form a Captive (SERFF cover page → Utah portal)'],
+  ['log-adopted',   '[00:06]', '→ ADOPTED    Biographical Affidavit (SERFF Section 4 — all fields present)'],
+  ['log-adopted',   '[00:07]', '→ ADOPTED    Business Plan (SERFF Section 2)'],
+  ['log-adapted',   '[00:08]', '→ ADAPTED    Pro Forma Financial Statements (extended to 3-year)'],
+  ['log-generated', '[00:09]', '→ GENERATED  Statement of Economic Benefit to Utah'],
+  ['log-adopted',   '[00:10]', '→ ADOPTED    Articles of Incorporation (SERFF Exhibit A)'],
+  ['log-adopted',   '[00:11]', '→ ADOPTED    Bylaws (SERFF Exhibit C)'],
+  ['log-adapted',   '[00:12]', '→ ADAPTED    Appointment of Commissioner (generic → Utah DOI form)'],
+  ['log-generated', '[00:13]', '→ GENERATED  Bank Capitalization Confirmation (template)'],
+  ['log-skipped',   '[00:14]', '→ SKIPPED    Irrevocable Letter of Credit (cash deposit used)'],
+  ['log-adapted',   '[00:15]', '→ ADAPTED    CPA Authorization Application'],
+  ['log-adapted',   '[00:16]', '→ ADAPTED    Actuary Certification Application'],
+  ['log-adopted',   '[00:17]', '→ ADOPTED    Membership Agreement (SERFF Exhibit D)'],
+  ['log-adopted',   '[00:18]', '→ ADOPTED    Investment Policy Statement (SERFF Section 5)'],
+  ['log-adapted',   '[00:19]', '→ ADAPTED    Reinsurance Exhibit (Utah DOI format)'],
+  ['log-skipped',   '[00:20]', '→ SKIPPED    Articles of Organization LLC (corp structure)'],
+  ['log-skipped',   '[00:21]', '→ SKIPPED    Operating Agreement LLC (corp structure)'],
+  ['log-adapted',   '[00:22]', '→ ADAPTED    Certificate of Organization (pending state issuance)'],
+  ['log-generated', '[00:23]', '→ GENERATED  NAIC Annual Statement Blank (template + entity header)'],
+  ['log-done',      '[00:24]', '✓ Package ready — 17 documents (6 adopted · 7 adapted · 4 generated · 3 skipped)'],
+];
+
+function runMockStep5() {
+  if (!document.getElementById('agentPanel').classList.contains('open')) togglePanel5();
+
+  if (!window._step2) window._step2 = MOCK_STEP2_CHECKLIST;
+  if (!window._step4.matches) window._step4.matches = MOCK_STEP4;
+  if (!window._step1.state) { window._step1.state = 'Utah'; window._step1.caseType = 'captive insurance in sports'; }
+
+  updateAgentSources();
+
+  var statusEl = document.getElementById('agentStatus');
+  var btn = document.getElementById('agentRunBtn');
+  var log = document.getElementById('agentLog');
+
+  log.innerHTML = '';
+  log.classList.remove('visible');
+  document.getElementById('agentSummaryBar').classList.remove('visible');
+  document.getElementById('agentTableWrap').classList.remove('visible');
+  document.getElementById('pkgBtn').classList.remove('ready');
+  document.getElementById('pkgBtn').textContent = 'COMPILE PACKAGE';
+
+  btn.disabled = true;
+  statusEl.className = 'match-status active';
+  statusEl.textContent = 'Agent starting...';
+
+  AGENT_LOG_LINES.forEach(function(line, idx) {
+    setTimeout(function() {
+      logLine(line[0], line[1], line[2]);
+      if (idx < 4) statusEl.textContent = line[2].replace('→ ', '').trim();
+    }, idx * 160);
+  });
+
+  setTimeout(function() {
+    renderAgentDocs(MOCK_STEP5);
+    statusEl.textContent = 'Done — 17 documents ready. [MOCK]';
+    statusEl.className = 'match-status';
+    btn.disabled = false;
+  }, AGENT_LOG_LINES.length * 160 + 400);
+}
+
+// ── Skip Steps 2 & 4 ─────────────────────────────────────────────────────────
+
+window._step2Skipped = false;
+window._step4Skipped = false;
+
+function skipStep2() {
+  window._step2Skipped = true;
+  var btn = document.getElementById('skipBtn2');
+  var notice = document.getElementById('skippedNotice2');
+  if (btn) { btn.textContent = '✓ SKIPPED'; btn.classList.add('skipped'); }
+  if (notice) notice.classList.add('visible');
+  // Collapse all option panels
+  ['2A','2B','2C'].forEach(function(id) {
+    var p = document.getElementById('panel' + id);
+    var c = document.getElementById('card' + id);
+    if (p) p.classList.remove('open');
+    if (c) c.classList.remove('active');
+  });
+  // Hide scorer
+  var sc = document.getElementById('scorerCard');
+  if (sc) { sc.className = 'scorer-card idle'; }
+}
+
+function skipStep4() {
+  window._step4Skipped = true;
+  var btn = document.getElementById('skipBtn4');
+  if (btn) { btn.textContent = '✓ SKIPPED'; btn.classList.add('skipped'); }
+  // Close panel if open
+  var panel = document.getElementById('matchPanel');
+  var expandBtn = document.getElementById('expandBtn4');
+  if (panel && panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    if (expandBtn) expandBtn.textContent = 'RUN ›';
+  }
+  // Show skipped status inside the panel
+  var statusEl = document.getElementById('matchStatus');
+  if (statusEl) {
+    statusEl.textContent = 'Step 04 skipped — agent will run without similarity matching data.';
+    statusEl.className = 'match-status';
+  }
+}
+
+// ── Add / Remove document rows ────────────────────────────────────────────────
+
+// --- Step 3 Checklist ---
+function removeChecklistItem(i) {
+  if (!window._step2 || !window._step2.items) return;
+  window._step2.items.splice(i, 1);
+  var summaryEl = document.getElementById('checklistSummary');
+  var tbody = document.getElementById('checklistTableBody');
+  var tableWrap = document.getElementById('checklistTableWrap');
+  renderChecklist(window._step2, summaryEl, tbody, tableWrap);
+  saveStep(3, window._step2);
+}
+
+function showAddChecklistRow() {
+  var tbody = document.getElementById('checklistTableBody');
+  var n = (window._step2 && window._step2.items) ? window._step2.items.length + 1 : '?';
+  var tr = document.createElement('tr');
+  tr.className = 'add-row';
+  tr.id = 'newChecklistRow';
+  tr.innerHTML =
+    '<td style="color:#5a6a7a;font-size:11px;">' + String(n).padStart(2,'0') + '</td>' +
+    '<td><input class="add-input-field" id="acName" placeholder="Document name..." />' +
+    '<input class="add-input-field" id="acDesc" placeholder="Description..." style="margin-top:4px;" /></td>' +
+    '<td><select class="add-select-field" id="acStatus">' +
+      '<option value="mandatory">mandatory</option>' +
+      '<option value="conditional">conditional</option>' +
+      '<option value="optional">optional</option>' +
+    '</select></td>' +
+    '<td><input class="add-input-field" id="acCat" placeholder="Category" /></td>' +
+    '<td><input class="add-input-field" id="acCit" placeholder="Citation" /></td>' +
+    '<td><button class="confirm-add-btn" onclick="confirmAddChecklist()">✓</button>' +
+    '<button class="cancel-add-btn" onclick="cancelAddRow(\'newChecklistRow\',\'addChecklistBtn\')">✕</button></td>';
+  tbody.appendChild(tr);
+  document.getElementById('addChecklistBtn').classList.remove('visible');
+  document.getElementById('acName').focus();
+}
+
+function confirmAddChecklist() {
+  var name = document.getElementById('acName').value.trim();
+  if (!name) return;
+  if (!window._step2) window._step2 = { state: '', caseType: '', summary: '', items: [] };
+  window._step2.items.push({
+    id: window._step2.items.length + 1,
+    name: name,
+    description: document.getElementById('acDesc').value.trim(),
+    status: document.getElementById('acStatus').value,
+    category: document.getElementById('acCat').value.trim() || 'Other',
+    citation: document.getElementById('acCit').value.trim() || '—',
+    conditionNote: ''
+  });
+  var summaryEl = document.getElementById('checklistSummary');
+  var tbody = document.getElementById('checklistTableBody');
+  var tableWrap = document.getElementById('checklistTableWrap');
+  renderChecklist(window._step2, summaryEl, tbody, tableWrap);
+  saveStep(3, window._step2);
+}
+
+// --- Step 4 Matches ---
+function removeMatchItem(i) {
+  if (!window._step4 || !window._step4.matches || !window._step4.matches.items) return;
+  window._step4.matches.items.splice(i, 1);
+  renderMatches(window._step4.matches);
+}
+
+function showAddMatchRow() {
+  var tbody = document.getElementById('matchTableBody');
+  var tr = document.createElement('tr');
+  tr.className = 'add-row';
+  tr.id = 'newMatchRow';
+  tr.innerHTML =
+    '<td style="color:#5a6a7a;font-size:11px;">—</td>' +
+    '<td><input class="add-input-field" id="amName" placeholder="Requirement name..." /></td>' +
+    '<td><input class="add-input-field" id="amSim" placeholder="0–100" style="width:60px;" /></td>' +
+    '<td><select class="add-select-field" id="amStatus">' +
+      '<option value="covered">covered</option>' +
+      '<option value="partial">partial</option>' +
+      '<option value="gap">gap</option>' +
+    '</select></td>' +
+    '<td><input class="add-input-field" id="amSection" placeholder="Matched section..." /></td>' +
+    '<td><button class="confirm-add-btn" onclick="confirmAddMatch()">✓</button>' +
+    '<button class="cancel-add-btn" onclick="cancelAddRow(\'newMatchRow\',\'addMatchBtn\')">✕</button></td>';
+  tbody.appendChild(tr);
+  document.getElementById('addMatchBtn').classList.remove('visible');
+  document.getElementById('amName').focus();
+}
+
+function confirmAddMatch() {
+  var name = document.getElementById('amName').value.trim();
+  if (!name) return;
+  if (!window._step4.matches) window._step4.matches = { items: [] };
+  window._step4.matches.items.push({
+    name: name,
+    similarity: parseInt(document.getElementById('amSim').value) || 0,
+    status: document.getElementById('amStatus').value,
+    section: document.getElementById('amSection').value.trim() || '—'
+  });
+  renderMatches(window._step4.matches);
+}
+
+// --- Step 5 Agent docs ---
+function removeAgentDoc(i) {
+  if (!window._step5 || !window._step5._items) return;
+  window._step5._items.splice(i, 1);
+  renderAgentDocs({ items: window._step5._items });
+}
+
+function showAddAgentDocRow() {
+  var tbody = document.getElementById('agentTableBody');
+  var tr = document.createElement('tr');
+  tr.className = 'add-row';
+  tr.id = 'newAgentDocRow';
+  tr.innerHTML =
+    '<td style="color:#5a6a7a;font-size:11px;">—</td>' +
+    '<td><input class="add-input-field" id="adName" placeholder="Document name..." /></td>' +
+    '<td><select class="add-select-field" id="adAction">' +
+      '<option value="generated">generated</option>' +
+      '<option value="adapted">adapted</option>' +
+      '<option value="adopted">adopted</option>' +
+      '<option value="skipped">skipped</option>' +
+    '</select></td>' +
+    '<td><input class="add-input-field" id="adNote" placeholder="Agent note..." /></td>' +
+    '<td><input class="add-input-field" id="adOutput" placeholder="Filename.docx" /></td>' +
+    '<td><button class="confirm-add-btn" onclick="confirmAddAgentDoc()">✓</button>' +
+    '<button class="cancel-add-btn" onclick="cancelAddRow(\'newAgentDocRow\',\'addAgentDocBtn\')">✕</button></td>';
+  tbody.appendChild(tr);
+  document.getElementById('addAgentDocBtn').classList.remove('visible');
+  document.getElementById('adName').focus();
+}
+
+function confirmAddAgentDoc() {
+  var name = document.getElementById('adName').value.trim();
+  if (!name) return;
+  if (!window._step5._items) window._step5._items = [];
+  window._step5._items.push({
+    name: name,
+    action: document.getElementById('adAction').value,
+    note: document.getElementById('adNote').value.trim() || 'Manually added.',
+    output: document.getElementById('adOutput').value.trim() || name.replace(/\s+/g,'_') + '.docx'
+  });
+  renderAgentDocs({ items: window._step5._items });
+}
+
+// --- shared cancel helper ---
+function cancelAddRow(rowId, btnId) {
+  var row = document.getElementById(rowId);
+  if (row) row.remove();
+  var btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('visible');
+}
+
+// ── Document generation & download ───────────────────────────────────────────
+
+async function downloadDoc(idx) {
+  var items = window._step5 && window._step5._items;
+  if (!items || !items[idx]) return;
+  var item = items[idx];
+  var btn = document.getElementById('dlBtn' + idx);
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+
+  try {
+    var settings = _getSettings();
+    var resp = await fetch('http://localhost:3001/api/generate-document-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: item.name,
+        action: item.action,
+        note: item.note || '',
+        state: window._step1.state || 'Unknown',
+        caseType: window._step1.caseType || '',
+        legislation: window._step1.text || '',
+        apiKey: settings.apiKey, model: settings.model,
+      })
+    });
+    if (!resp.ok) throw new Error('Server error ' + resp.status);
+    var data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    // Trigger download
+    var blob = new Blob([data.content], { type: 'text/markdown;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = data.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (btn) { btn.textContent = '✓ SAVED'; btn.classList.add('done'); btn.disabled = false; }
+  } catch(e) {
+    if (btn) { btn.textContent = 'RETRY'; btn.disabled = false; }
+    console.error('downloadDoc error:', e);
+  }
+}
+
+async function downloadAllDocs() {
+  var items = window._step5 && window._step5._items;
+  if (!items) return;
+  var btn = document.getElementById('dlAllBtn');
+  if (btn) { btn.textContent = '⏳ GENERATING...'; btn.disabled = true; }
+
+  var toDownload = items.map(function(item, i) { return { item: item, i: i }; })
+    .filter(function(x) { return x.item.action !== 'skipped'; });
+
+  for (var k = 0; k < toDownload.length; k++) {
+    await downloadDoc(toDownload[k].i);
+    // small gap between downloads to avoid rate limits
+    await new Promise(function(r) { setTimeout(r, 800); });
+  }
+
+  if (btn) { btn.textContent = '✓ ALL DOWNLOADED'; btn.disabled = false; }
+  setTimeout(function() {
+    if (btn) btn.textContent = '⬇ DOWNLOAD ALL';
+  }, 4000);
+}
+
+// ── Session persistence ────────────────────────────────────────────────────────
+
+function _fmtAge(ts) {
+  if (!ts) return '';
+  var diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  var d = new Date(ts);
+  return (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0') +
+         ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function _showPill(id, ts) {
+  var el = document.getElementById('savePill' + id);
+  if (!el) return;
+  el.innerHTML = '&#9679; SAVED <span class="save-ts">' + _fmtAge(ts) + '</span>';
+  el.classList.add('visible');
+}
+
+function _hidePill(id) {
+  var el = document.getElementById('savePill' + id);
+  if (!el) return;
+  el.classList.remove('visible');
+}
+
+function saveStep(n, data) {
+  try {
+    var payload = { ts: Date.now(), data: data };
+    localStorage.setItem('ciff_step' + n, JSON.stringify(payload));
+    _showPill(n, payload.ts);
+  } catch(e) { console.warn('saveStep failed', n, e); }
+}
+
+function clearSession() {
+  [1,2,3,4,5].forEach(function(n) {
+    localStorage.removeItem('ciff_step' + n);
+    _hidePill(n);
+  });
+  window._step1 = { state: '', caseType: '', text: '', terms: [] };
+  var serffRow = document.getElementById('serffTermsRow');
+  if (serffRow) { serffRow.classList.remove('visible'); document.getElementById('serffTermsChips').innerHTML = ''; }
+  window._step2 = undefined;
+  window._step3 = { filename: '', content: '', score: null };
+  window._step4 = { matches: null };
+  window._step5 = { docs: null };
+  // Step 01 UI
+  document.getElementById('researchResult').innerHTML = '';
+  document.getElementById('researchResult').classList.remove('visible');
+  document.getElementById('researchStatus').textContent = '';
+  var hint = document.getElementById('checklistHint');
+  hint.textContent = 'Paste legislation text below, or run Step 01 first to auto-fill.';
+  hint.className = 'checklist-hint';
+  // Step 03 checklist UI
+  document.getElementById('checklistInput').value = '';
+  document.getElementById('checklistSummary').classList.remove('visible');
+  document.getElementById('checklistTableWrap').classList.remove('visible');
+  document.getElementById('checklistTableBody').innerHTML = '';
+  document.getElementById('checklistStatus').textContent = '';
+  // Step 02 scorer UI
+  var sc = document.getElementById('scorerCard');
+  if (sc) { sc.className = 'scorer-card idle'; }
+  var ss = document.getElementById('scorerStatus');
+  if (ss) { ss.textContent = 'Select a source option above to score a SERFF document.'; ss.style.display = 'block'; }
+  var sg = document.getElementById('scorerGrid');
+  if (sg) sg.style.display = 'none';
+  // Step 04 UI
+  document.getElementById('matchSummaryBar').classList.remove('visible');
+  document.getElementById('matchTableWrap').classList.remove('visible');
+  document.getElementById('matchTableBody').innerHTML = '';
+  document.getElementById('matchStatus').textContent = '';
+  // Step 05 UI
+  var al = document.getElementById('agentLog');
+  al.innerHTML = ''; al.classList.remove('visible');
+  document.getElementById('agentSummaryBar').classList.remove('visible');
+  document.getElementById('agentTableWrap').classList.remove('visible');
+  document.getElementById('agentTableBody').innerHTML = '';
+  document.getElementById('agentStatus').textContent = '';
+  var pkgBtn = document.getElementById('pkgBtn');
+  if (pkgBtn) { pkgBtn.classList.remove('ready'); pkgBtn.textContent = 'COMPILE PACKAGE'; }
+}
+
+function restoreSession() {
+  // Step 1
+  try {
+    var s1 = localStorage.getItem('ciff_step1');
+    if (s1) {
+      var p1 = JSON.parse(s1);
+      window._step1 = p1.data;
+      if (window._step1.text) {
+        var re = document.getElementById('researchResult');
+        re.innerHTML = mdToHtml(window._step1.text);
+        re.classList.add('visible');
+        document.getElementById('researchStatus').textContent = 'Restored from session.';
+        notifyStep2Ready();
+      }
+      _showPill(1, p1.ts);
+    }
+  } catch(e) {}
+
+  // Step 2 — SERFF scorer
+  try {
+    var s2 = localStorage.getItem('ciff_step2');
+    if (s2) {
+      var p2 = JSON.parse(s2);
+      window._step3.filename = p2.data.filename || '';
+      window._step3.score = p2.data.score;
+      if (p2.data.score) animateScorer(p2.data.score);
+      _showPill(2, p2.ts);
+    }
+  } catch(e) {}
+
+  // Step 3 — checklist
+  try {
+    var s3 = localStorage.getItem('ciff_step3');
+    if (s3) {
+      var p3 = JSON.parse(s3);
+      window._step2 = p3.data;
+      var summaryEl = document.getElementById('checklistSummary');
+      var tbody3    = document.getElementById('checklistTableBody');
+      var tableWrap = document.getElementById('checklistTableWrap');
+      renderChecklist(p3.data, summaryEl, tbody3, tableWrap);
+      document.getElementById('checklistStatus').textContent =
+        'Restored — ' + ((p3.data.items && p3.data.items.length) || 0) + ' documents.';
+      _showPill(3, p3.ts);
+    }
+  } catch(e) {}
+
+  // Step 4 — matching
+  try {
+    var s4 = localStorage.getItem('ciff_step4');
+    if (s4) {
+      var p4 = JSON.parse(s4);
+      window._step4 = p4.data;
+      if (window._step4.matches) {
+        renderMatches(window._step4.matches);
+        document.getElementById('matchStatus').textContent = 'Restored from session.';
+      }
+      _showPill(4, p4.ts);
+    }
+  } catch(e) {}
+
+  // Step 5 — agent docs
+  try {
+    var s5 = localStorage.getItem('ciff_step5');
+    if (s5) {
+      var p5 = JSON.parse(s5);
+      window._step5 = p5.data;
+      if (window._step5.docs) {
+        renderAgentDocs(window._step5.docs);
+        document.getElementById('agentStatus').textContent = 'Restored from session.';
+      }
+      _showPill(5, p5.ts);
+    }
+  } catch(e) {}
+}
+
+// ── Change 2: Offline monitor ─────────────────────────────────────────────────
+function _checkServerOnline() {
+  fetch('http://localhost:3001/api/states')
+    .then(function(r) {
+      if (r.ok) {
+        document.getElementById('offlineBanner').classList.remove('visible');
+        document.body.classList.remove('has-offline-banner');
+      } else { throw new Error('not ok'); }
+    })
+    .catch(function() {
+      document.getElementById('offlineBanner').classList.add('visible');
+      document.body.classList.add('has-offline-banner');
+    });
+}
+
+// ── Change 4: Step dependency locks ──────────────────────────────────────────
+function checkStepLocks() {
+  // Step 03 (expandBtn2): requires window._step1.text
+  var lock3 = document.getElementById('lockIcon3');
+  var btn3  = document.getElementById('expandBtn2');
+  var step3Unlocked = window._step1 && window._step1.text;
+  if (lock3) lock3.style.display = step3Unlocked ? 'none' : '';
+  if (btn3)  btn3.classList.toggle('locked', !step3Unlocked);
+
+  // Step 04 (expandBtn4): requires window._step2.items.length
+  var lock4 = document.getElementById('lockIcon4');
+  var btn4  = document.getElementById('expandBtn4');
+  var step4Unlocked = window._step2 && window._step2.items && window._step2.items.length > 0;
+  if (lock4) lock4.style.display = step4Unlocked ? 'none' : '';
+  if (btn4)  btn4.classList.toggle('locked', !step4Unlocked);
+}
+
+// ── Change 3: Session restore pill ───────────────────────────────────────────
+function _showRestoredPill() {
+  var pill = document.getElementById('sessionRestoredPill');
+  if (!pill) return;
+  pill.classList.add('visible');
+  setTimeout(function() { pill.classList.remove('visible'); }, 3000);
+}
+
+// ── Change 9: Export full report ─────────────────────────────────────────────
+function exportReport() {
+  var date = new Date().toISOString().slice(0,10);
+  var state = (window._step1 && window._step1.state) || 'Unknown';
+  var caseType = (window._step1 && window._step1.caseType) || '';
+  var legText = (window._step1 && window._step1.text) ? window._step1.text.slice(0, 500) : '(none)';
+
+  var md = '# Captive Insurance Filing Report\n';
+  md += 'Generated: ' + date + '\n\n';
+
+  md += '## State / Case Type\n';
+  md += state + (caseType ? ' — ' + caseType : '') + '\n\n';
+
+  md += '## Legislation Summary\n';
+  md += legText + (window._step1 && window._step1.text && window._step1.text.length > 500 ? '...' : '') + '\n\n';
+
+  md += '## Document Checklist\n';
+  if (window._step2 && window._step2.items && window._step2.items.length) {
+    md += '| # | Document | Status | Priority |\n';
+    md += '|---|----------|--------|----------|\n';
+    window._step2.items.forEach(function(item, i) {
+      md += '| ' + (i+1) + ' | ' + (item.name||'') + ' | ' + (item.status||'') + ' | ' + (item.priority||'—') + ' |\n';
+    });
+  } else {
+    md += '(not yet generated)\n';
+  }
+  md += '\n';
+
+  md += '## SERFF Coverage\n';
+  var rmb = document.getElementById('repoMatchBody');
+  if (rmb && rmb.rows && rmb.rows.length) {
+    md += '| Requirement | SERFF Match | Status |\n';
+    md += '|-------------|-------------|--------|\n';
+    for (var r = 0; r < rmb.rows.length; r++) {
+      var cells = rmb.rows[r].cells;
+      if (cells.length >= 4) {
+        md += '| ' + (cells[1].textContent||'').trim() + ' | ' + (cells[2].textContent||'').trim() + ' | ' + (cells[3].textContent||'').trim() + ' |\n';
+      }
+    }
+  } else {
+    md += '(not yet run)\n';
+  }
+  md += '\n';
+
+  md += '## Generation Status\n';
+  if (window._step5 && window._step5._items && window._step5._items.length) {
+    md += '| # | Document | Action | Output |\n';
+    md += '|---|----------|--------|--------|\n';
+    window._step5._items.forEach(function(item, i) {
+      md += '| ' + (i+1) + ' | ' + (item.name||'') + ' | ' + (item.action||'') + ' | ' + (item.output||'') + ' |\n';
+    });
+  } else {
+    md += '(not yet generated)\n';
+  }
+
+  var filename = 'filing-report-' + state.toLowerCase().replace(/\s+/g,'-') + '-' + date + '.md';
+  var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Change 11: Batch ZIP download ─────────────────────────────────────────────
+async function downloadAllAsZip() {
+  var items = window._step5 && window._step5._items;
+  if (!items) return;
+  var btn = document.getElementById('dlZipBtn');
+  if (btn) { btn.textContent = '⏳ ZIPPING...'; btn.disabled = true; }
+
+  var toZip = items.filter(function(item) { return item.action !== 'skipped'; });
+  var zip = new JSZip();
+  var state = (window._step1 && window._step1.state) || 'filing';
+  var settings = _getSettings();
+
+  for (var k = 0; k < toZip.length; k++) {
+    var item = toZip[k];
+    try {
+      var resp = await fetch('http://localhost:3001/api/generate-document-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: item.name,
+          action: item.action,
+          note: item.note || '',
+          state: window._step1.state || 'Unknown',
+          caseType: window._step1.caseType || '',
+          legislation: window._step1.text || '',
+          apiKey: settings.apiKey, model: settings.model,
+        })
+      });
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data.content) {
+          var fname = data.filename || item.name.replace(/[^a-zA-Z0-9_\-]/g,'_') + '.md';
+          zip.file(fname, data.content);
+        }
+      }
+    } catch(e) { console.warn('zip skip:', item.name, e); }
+    if (btn) btn.textContent = '⏳ ' + (k+1) + '/' + toZip.length + '...';
+    await new Promise(function(r){ setTimeout(r, 500); });
+  }
+
+  var date = new Date().toISOString().slice(0,10);
+  var zipFilename = 'filing-documents-' + state.toLowerCase().replace(/\s+/g,'-') + '-' + date + '.zip';
+  zip.generateAsync({ type: 'blob' }).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = zipFilename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (btn) { btn.textContent = '✓ ZIPPED'; btn.disabled = false; }
+    setTimeout(function() { if (btn) btn.textContent = 'DOWNLOAD ALL AS ZIP ⬇'; }, 3000);
+  });
+}
+
+// ── Override restoreSession to show pill and check locks ─────────────────────
+var _origRestoreSession = restoreSession;
+function _restoreSession() {
+  var hadData = false;
+  try {
+    if (localStorage.getItem('ciff_step1') || localStorage.getItem('ciff_step3')) hadData = true;
+  } catch(e) {}
+  _origRestoreSession();
+  if (hadData) _showRestoredPill();
+  checkStepLocks();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  _restoreSession();
+  _checkServerOnline();
+  setInterval(_checkServerOnline, 20000);
+  // Initialize lib
+  initLibrary();
+  checkStepLocks();
+});
+</script>
+</body>
+</html>

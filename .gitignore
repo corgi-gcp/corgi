@@ -12,3 +12,6 @@
 .DS_Store
 Thumbs.db
 audit-tool/node_modules/
+
+audit-tool/.env
+.claude/

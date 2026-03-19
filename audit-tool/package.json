@@ -4,14 +4,17 @@
   "description": "Regulatory audit tool for Utah captive insurance filing packages",
   "main": "src/index.ts",
   "scripts": {
-    "audit": "ts-node src/index.ts"
+    "audit": "ts-node src/index.ts",
+    "serve": "ts-node src/legislation-server.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
+    "@types/express": "^5.0.6",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
+    "express": "^5.2.1",
     "mammoth": "^1.8.0"
   },
   "devDependencies": {
