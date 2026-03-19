@@ -86,7 +86,7 @@ app.get('/api/states', (_req, res) => {
 });
 
 app.post('/api/legislation-research', async (req, res) => {
-  const { state, caseType, apiKey: bodyApiKey, model: bodyModel } = req.body as { state: string; caseType: string; apiKey?: string; model?: string };
+  const { state, caseType, policyTypes, apiKey: bodyApiKey, model: bodyModel } = req.body as { state: string; caseType: string; policyTypes?: string; apiKey?: string; model?: string };
 
   if (!state || !caseType) {
     return res.status(400).json({ error: 'state and caseType are required' });
@@ -101,6 +101,7 @@ app.post('/api/legislation-research', async (req, res) => {
   const send = (data: object) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
   try {
+    const policyTypesLine = policyTypes ? `\nSpecific Policy Types: ${policyTypes}` : '';
     send({ type: 'status', message: `Searching ${state} DOI and NAIC for "${caseType}" statutes...` });
 
     const messages: Anthropic.MessageParam[] = [
@@ -109,15 +110,15 @@ app.post('/api/legislation-research', async (req, res) => {
         content: `You are a regulatory research assistant. Research captive insurance legislation for the following:
 
 State: ${state}
-Case Type / Business Context: ${caseType}
+Case Type / Business Context: ${caseType}${policyTypesLine}
 
 Please search for and return:
 1. Current captive insurance statutes from the ${state} Department of Insurance (DOI)
 2. Relevant NAIC model laws or guidelines that apply
-3. Key filing requirements and document checklist for this case type
-4. Any recent amendments or regulatory changes
+3. Key filing requirements and document checklist for this case type${policyTypes ? `\n4. Specific requirements for each policy type: ${policyTypes}` : ''}
+${policyTypes ? '5' : '4'}. Any recent amendments or regulatory changes
 
-Format your response as structured sections with clear headings. Be specific about statute numbers, rule citations, and document requirements.`
+${policyTypes ? `Pay particular attention to how each policy type (${policyTypes}) is treated under ${state} captive statutes — note any distinct capital requirements, form filing rules, or actuarial standards that differ by line of business.\n\n` : ''}Format your response as structured sections with clear headings. Be specific about statute numbers, rule citations, and document requirements.`
       }
     ];
 
@@ -490,9 +491,12 @@ Return raw JSON only (no markdown):
 
 // ── SERFF search terms ────────────────────────────────────────────────────────
 app.post('/api/serff-search-terms', async (req, res) => {
-  const { text, state, caseType, apiKey: bodyApiKey, model: bodyModel } = req.body as { text: string; state: string; caseType: string; apiKey?: string; model?: string };
+  const { text, state, caseType, policyTypes, apiKey: bodyApiKey, model: bodyModel } = req.body as { text: string; state: string; caseType: string; policyTypes?: string; apiKey?: string; model?: string };
   try {
-    const prompt = `Based on this captive insurance legislation research for ${state} (${caseType}), generate 8-12 precise SERFF search terms that a filer would use to find relevant reference documents in the SERFF database.
+    const policyTypesSection = policyTypes
+      ? `\n- Policy-type specific terms for each line of business: ${policyTypes} (include abbreviations, filing codes, and SERFF line-of-business tags)`
+      : '';
+    const prompt = `Based on this captive insurance legislation research for ${state} (${caseType}${policyTypes ? ` — policy types: ${policyTypes}` : ''}), generate 10-16 precise SERFF search terms that a filer would use to find relevant reference documents in the SERFF database.
 
 SERFF searches across filing names, company names, and descriptions. Make terms specific and actionable.
 
@@ -503,7 +507,7 @@ Include terms covering:
 - Entity type (captive, association captive, group captive, etc.)
 - State-specific regulatory keywords
 - Document type keywords (feasibility study, application, bylaws, etc.)
-- Business context keywords from the case type
+- Business context keywords from the case type${policyTypesSection}
 
 Return raw JSON only — no markdown, no explanation:
 {"terms": ["term 1", "term 2", "term 3", ...]}`;

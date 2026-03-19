@@ -2277,6 +2277,10 @@ select option { background:#FFF!important; color:#1A1D23!important; }
           <label>Case Type / Business Context</label>
           <input type="text" id="caseTypeInput" placeholder="e.g. captive insurance in sports" value="captive insurance in sports" />
         </div>
+        <div class="panel-field">
+          <label>Specific Policy Types <span style="font-weight:400;color:#8B95A5;font-size:11px;">(optional — one or more, comma-separated)</span></label>
+          <input type="text" id="policyTypeInput" placeholder="e.g. workers compensation, professional liability, D&amp;O, cyber liability" />
+        </div>
         <button class="run-btn" id="runBtn" onclick="runResearch()">SEARCH</button>
         <button class="mock-btn" onclick="runMockStep1()">MOCK ▸</button>
       </div>
@@ -2861,12 +2865,12 @@ function mdToHtml(md) {
     .split('\n').map(l => l.trim() ? (l.startsWith('<') ? l : `<p>${l}</p>`) : '').join('');
 }
 
-async function _runResearchForState(state, caseType, resultEl, statusEl) {
+async function _runResearchForState(state, caseType, policyTypes, resultEl, statusEl) {
   var settings = _getSettings();
   const resp = await fetch('http://localhost:3001/api/legislation-research', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state, caseType, apiKey: settings.apiKey, model: settings.model }),
+    body: JSON.stringify({ state, caseType, policyTypes, apiKey: settings.apiKey, model: settings.model }),
   });
   if (!resp.ok) throw new Error('Server error: ' + resp.status);
   const reader = resp.body.getReader();
@@ -2899,6 +2903,7 @@ async function _runResearchForState(state, caseType, resultEl, statusEl) {
 async function runResearch() {
   const state = document.getElementById('stateSelect').value;
   const caseType = document.getElementById('caseTypeInput').value.trim();
+  const policyTypes = (document.getElementById('policyTypeInput').value || '').trim();
   const statusEl = document.getElementById('researchStatus');
   const resultEl = document.getElementById('researchResult');
   const btn = document.getElementById('runBtn');
@@ -2914,7 +2919,7 @@ async function runResearch() {
   if (s3 && s3.value) states.push(s3.value);
 
   // Reset all downstream data when starting a fresh search
-  window._step1 = { state: '', caseType: '', text: '', terms: [] };
+  window._step1 = { state: '', caseType: '', policyTypes: '', text: '', terms: [] };
   window._step2 = undefined;
   window._step4 = { matches: null };
   window._step5 = { docs: null, _items: null };
@@ -2945,7 +2950,7 @@ async function runResearch() {
     for (var si = 0; si < states.length; si++) {
       var st = states[si];
       statusEl.textContent = 'Searching ' + st + ' (' + (si+1) + '/' + states.length + ')...';
-      var stateText = await _runResearchForState(st, caseType, resultEl, statusEl);
+      var stateText = await _runResearchForState(st, caseType, policyTypes, resultEl, statusEl);
       if (stateText) {
         combinedText += (combinedText ? '\n\n---\n\n## ' + st + '\n\n' : '') + stateText;
         var headerTag = states.length > 1 ? '<h2>' + st + '</h2>' : '';
@@ -2958,8 +2963,9 @@ async function runResearch() {
     window._step1.text = combinedText;
     window._step1.state = state;
     window._step1.caseType = caseType;
+    window._step1.policyTypes = policyTypes;
     notifyStep2Ready();
-    generateSerffTerms(combinedText, state, caseType);
+    generateSerffTerms(combinedText, state, caseType, policyTypes);
     saveStep(1, window._step1);
     checkStepLocks();
   } catch (err) {
@@ -3120,13 +3126,13 @@ function copyAllTerms() {
   });
 }
 
-async function generateSerffTerms(text, state, caseType) {
+async function generateSerffTerms(text, state, caseType, policyTypes) {
   try {
     var settings = _getSettings();
     var resp = await fetch('http://localhost:3001/api/serff-search-terms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, state: state, caseType: caseType, apiKey: settings.apiKey, model: settings.model })
+      body: JSON.stringify({ text: text, state: state, caseType: caseType, policyTypes: policyTypes || '', apiKey: settings.apiKey, model: settings.model })
     });
     if (!resp.ok) throw new Error('server ' + resp.status);
     var data = await resp.json();
