@@ -3035,7 +3035,7 @@ function _populateStateSelects(states) {
   if (s3) s3.innerHTML = opt3Html;
 }
 
-fetch('http://localhost:3001/api/states').then(function(r){ return r.json(); }).then(function(states) {
+fetch('/api/states').then(function(r){ return r.json(); }).then(function(states) {
   _allStates = states;
   _populateStateSelects(states);
 }).catch(function() {
@@ -3087,7 +3087,7 @@ function mdToHtml(md) {
 
 async function _runResearchForState(state, caseType, policyTypes, resultEl, statusEl) {
   var settings = _getSettings();
-  const resp = await fetch('http://localhost:3001/api/legislation-research', {
+  const resp = await fetch('/api/research-and-checklist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ state, caseType, policyTypes, apiKey: settings.apiKey, model: settings.model }),
@@ -3109,8 +3109,25 @@ async function _runResearchForState(state, caseType, policyTypes, resultEl, stat
         const msg = JSON.parse(line.slice(6));
         if (msg.type === 'status') {
           statusEl.textContent = '[' + state + '] ' + msg.message;
+        } else if (msg.type === 'research_result') {
+          resultText = msg.text;
         } else if (msg.type === 'result') {
           resultText = msg.text;
+        } else if (msg.type === 'checklist_result') {
+          // Auto-populate Step 02 checklist from combined call
+          if (msg.checklist) {
+            window._step2 = msg.checklist;
+            var summaryEl = document.getElementById('checklistSummary');
+            var tbody = document.getElementById('checklistTableBody');
+            var tableWrap = document.getElementById('checklistTableWrap');
+            renderChecklist(msg.checklist, summaryEl, tbody, tableWrap);
+            document.getElementById('checklistStatus').textContent =
+              'Auto-extracted — ' + ((msg.checklist.items && msg.checklist.items.length) || 0) + ' documents identified.';
+            document.getElementById('checklistStatus').className = 'checklist-status';
+            saveStep(3, window._step2);
+            checkStepLocks();
+            _reidentifyLibDocsWithChecklist();
+          }
         } else if (msg.type === 'error') {
           throw new Error(msg.message);
         }
@@ -3349,7 +3366,7 @@ function copyAllTerms() {
 async function generateSerffTerms(text, state, caseType, policyTypes) {
   try {
     var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/serff-search-terms', {
+    var resp = await fetch('/api/serff-search-terms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: text, state: state, caseType: caseType, policyTypes: policyTypes || '', apiKey: settings.apiKey, model: settings.model })
@@ -3568,24 +3585,28 @@ async function identifyLibDoc(idOrFile, fileArg) {
       ? window._step2.items.map(function(item){ return { id: item.id, name: item.name }; })
       : [];
 
-    var apiKey = localStorage.getItem('ciff_apiKey') || undefined;
-    var model  = localStorage.getItem('ciff_model')  || undefined;
-    var baseUrl = 'http://localhost:3001';
+    var settings = _getSettings();
 
-    var resp = await fetch(baseUrl + '/api/identify-serff-doc', {
+    var resp = await fetch('/api/ingest-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fileName: doc.name, fileType: file.type||'application/octet-stream',
         fileContent: fileContent, isBase64: isBase64, checklist: checklist,
-        apiKey: apiKey, model: model })
+        apiKey: settings.apiKey, model: settings.model })
     });
 
     if (!resp.ok) { var e = await resp.json(); throw new Error(e.error || resp.status); }
     var result = await resp.json();
 
-    doc.identified   = result;
+    // Populate both identification AND score from single call
+    doc.identified   = result.identification;
     doc.identStatus  = 'done';
-    if (result.documentType && result.confidence === 'high') doc.identifiedType = result.documentType;
+    if (result.identification && result.identification.documentType && result.identification.confidence === 'high') doc.identifiedType = result.identification.documentType;
+    if (result.score) {
+      doc.score = result.score.composite;
+      doc.tier  = result.score.tier;
+      doc.gates = result.score.gates;
+    }
 
   } catch (err) {
     doc.identStatus = 'error';
@@ -3722,20 +3743,31 @@ async function scoreLibDoc(id) {
     var text = doc.isBuiltIn
       ? 'Reference document: ' + doc.name + ' — ' + (doc.category||'') + ' category captive insurance filing document'
       : await _libReadText(id, doc.name);
+    var checklist = (window._step2 && window._step2.items)
+      ? window._step2.items.map(function(item){ return { id: item.id, name: item.name }; })
+      : [];
     var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/serff-quality-score', {
+    var resp = await fetch('/api/ingest-document', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ content: text.slice(0,8000), name: doc.name, apiKey: settings.apiKey, model: settings.model })
+      body: JSON.stringify({ content: text.slice(0,8000), source: doc.name, checklist: checklist, apiKey: settings.apiKey, model: settings.model })
     });
     var data = await resp.json();
-    if (data.composite !== undefined) {
-      _libDocs[id].score = data.composite;
-      _libDocs[id].tier  = data.tier;
-      _libDocs[id].gates = data.gates;
+    if (data.score && data.score.composite !== undefined) {
+      _libDocs[id].score = data.score.composite;
+      _libDocs[id].tier  = data.score.tier;
+      _libDocs[id].gates = data.score.gates;
+      // Also populate identification if available
+      if (data.identification) {
+        _libDocs[id].identified = data.identification;
+        _libDocs[id].identStatus = 'done';
+        if (data.identification.documentType && data.identification.confidence === 'high') {
+          _libDocs[id].identifiedType = data.identification.documentType;
+        }
+      }
       _libSaveMeta();
       window._step3 = window._step3 || {};
-      window._step3.score = data;
-      if (typeof animateScorer === 'function') animateScorer(data);
+      window._step3.score = data.score;
+      if (typeof animateScorer === 'function') animateScorer(data.score);
       if (card) { card.outerHTML = _renderLibCard(_libDocs[id]); }
     }
   } catch(e) {
@@ -4009,7 +4041,7 @@ async function runChecklist() {
 
   try {
     var settings = _getSettings();
-    const resp = await fetch('http://localhost:3001/api/document-checklist', {
+    const resp = await fetch('/api/document-checklist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state, caseType, legislationText: text, apiKey: settings.apiKey, model: settings.model }),
@@ -4408,7 +4440,7 @@ async function submitToScorer(content, source, statusSelector) {
 
   try {
     var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/serff-quality-score', {
+    var resp = await fetch('/api/ingest-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: content, source: source, apiKey: settings.apiKey, model: settings.model }),
@@ -4416,38 +4448,13 @@ async function submitToScorer(content, source, statusSelector) {
 
     if (!resp.ok) throw new Error('Server error: ' + resp.status);
 
-    var reader = resp.body.getReader();
-    var decoder = new TextDecoder();
-    var buffer = '';
-
-    while (true) {
-      var _ref = await reader.read();
-      var done = _ref.done;
-      var value = _ref.value;
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      var lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (!line.startsWith('data: ')) continue;
-        try {
-          var msg = JSON.parse(line.slice(6));
-          if (msg.type === 'status') {
-            if (statusEl) statusEl.textContent = msg.message;
-            document.getElementById('scorerStatus').textContent = msg.message;
-          } else if (msg.type === 'result') {
-            if (statusEl) { statusEl.textContent = 'Done.'; statusEl.className = 'opt-status done'; }
-            animateScorer(msg.score);
-          } else if (msg.type === 'error') {
-            if (statusEl) { statusEl.textContent = 'Error: ' + msg.message; statusEl.className = 'opt-status error'; }
-            card.classList.remove('loading');
-            card.classList.add('idle');
-          }
-        } catch(e) {}
-      }
+    // ingest-document returns JSON directly, not SSE
+    var ingestData = await resp.json();
+    if (ingestData.score) {
+      if (statusEl) { statusEl.textContent = 'Done.'; statusEl.className = 'opt-status done'; }
+      animateScorer(ingestData.score);
+    } else {
+      throw new Error('No score data returned');
     }
   } catch(err) {
     if (statusEl) { statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'opt-status error'; }
@@ -4455,6 +4462,8 @@ async function submitToScorer(content, source, statusSelector) {
     card.classList.add('idle');
   }
 }
+
+
 
 const MOCK_SCORE = {
   gates: {
@@ -4667,7 +4676,7 @@ async function runMatch() {
 
   try {
     var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/match-requirements', {
+    var resp = await fetch('/api/match-requirements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4824,57 +4833,67 @@ function logLine(cls, ts, msg) {
   log.scrollTop = log.scrollHeight;
 }
 
-async function runAgent() {
+function runAgent() {
   var statusEl = document.getElementById('agentStatus');
   var btn = document.getElementById('agentRunBtn');
   if (!window._step2 || !window._step2.items) {
     statusEl.textContent = 'Complete Step 03 first (or run MOCK ▸ there).'; statusEl.className = 'match-status error'; return;
   }
-  statusEl.textContent = 'Connecting...'; statusEl.className = 'match-status active';
   btn.disabled = true;
   document.getElementById('agentLog').innerHTML = '';
   document.getElementById('agentLog').classList.remove('visible');
   document.getElementById('agentSummaryBar').classList.remove('visible');
   document.getElementById('agentTableWrap').classList.remove('visible');
 
-  try {
-    var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/generate-documents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        requirements: window._step2.items,
-        matches: window._step4.matches ? window._step4.matches.items : [],
-        serffContext: _buildSerffContext(),
-        legislation: window._step1.text || '',
-        state: window._step2.state,
-        apiKey: settings.apiKey, model: settings.model,
-      }),
-    });
-    if (!resp.ok) throw new Error('Server error: ' + resp.status);
-    var reader = resp.body.getReader();
-    var decoder = new TextDecoder();
-    var buffer = '';
-    while (true) {
-      var ref = await reader.read();
-      if (ref.done) break;
-      buffer += decoder.decode(ref.value, { stream: true });
-      var lines = buffer.split('\n'); buffer = lines.pop();
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (!line.startsWith('data: ')) continue;
-        try {
-          var msg = JSON.parse(line.slice(6));
-          if (msg.type === 'status') { statusEl.textContent = msg.message; }
-          else if (msg.type === 'log') { logLine('log-' + (msg.action || 'status'), msg.ts || '', msg.message); }
-          else if (msg.type === 'result') { renderAgentDocs(msg.docs); statusEl.textContent = 'Done.'; statusEl.className = 'match-status'; }
-          else if (msg.type === 'error') { statusEl.textContent = 'Error: ' + msg.message; statusEl.className = 'match-status error'; }
-        } catch(e) {}
+  statusEl.textContent = 'Building decision table from match data...';
+  statusEl.className = 'match-status active';
+
+  // Build decision table locally from Step 4 match data (no Claude call needed)
+  var matchItems = (window._step4 && window._step4.matches && window._step4.matches.items) || [];
+  var requirements = window._step2.items;
+  var state = window._step2.state || 'Unknown';
+
+  var items = requirements.map(function(req, i) {
+    var match = matchItems.find(function(m) { return m.name === req.name; }) || matchItems[i];
+    var action, note, output;
+
+    if (match) {
+      if (match.status === 'covered') {
+        action = 'adopted';
+        note = 'Adopted from SERFF reference. ' + (match.section || '');
+      } else if (match.status === 'partial') {
+        action = 'adapted';
+        note = 'Adapted from partial match. ' + (match.section || '') + ' — requires ' + state + '-specific updates.';
+      } else {
+        // gap — check if conditional N/A
+        if (req.status === 'conditional' && match.section && match.section.toLowerCase().includes('n/a')) {
+          action = 'skipped';
+          note = 'N/A — ' + (req.conditionNote || match.section);
+        } else {
+          action = 'generated';
+          note = 'No SERFF reference found. Draft from ' + state + ' statute. ' + (req.citation || '');
+        }
       }
+    } else {
+      action = 'generated';
+      note = 'No match data — will generate from legislation. ' + (req.citation || '');
     }
-  } catch(err) {
-    statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'match-status error';
-  } finally { btn.disabled = false; }
+
+    output = action === 'skipped' ? '—' : 'SEIC_' + req.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_') + '.md';
+
+    // Log line
+    var ts = '[00:' + String(i).padStart(2, '0') + ']';
+    var logCls = 'log-' + action;
+    var arrow = action === 'adopted' ? '→ ADOPTED    ' : action === 'adapted' ? '→ ADAPTED    ' : action === 'generated' ? '→ GENERATED  ' : '→ SKIPPED    ';
+    logLine(logCls, ts, arrow + req.name);
+
+    return { name: req.name, action: action, note: note, output: output };
+  });
+
+  renderAgentDocs({ items: items });
+  statusEl.textContent = 'Done — ' + items.length + ' documents processed (no API call needed).';
+  statusEl.className = 'match-status';
+  btn.disabled = false;
 }
 
 function renderAgentDocs(data) {
@@ -5220,7 +5239,7 @@ async function downloadDoc(idx) {
 
   try {
     var settings = _getSettings();
-    var resp = await fetch('http://localhost:3001/api/generate-document-content', {
+    var resp = await fetch('/api/generate-document-content', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -5433,7 +5452,7 @@ function restoreSession() {
 
 // ── Change 2: Offline monitor ─────────────────────────────────────────────────
 function _checkServerOnline() {
-  fetch('http://localhost:3001/api/states')
+  fetch('/api/states')
     .then(function(r) {
       if (r.ok) {
         document.getElementById('offlineBanner').classList.remove('visible');
@@ -5551,7 +5570,7 @@ async function downloadAllAsZip() {
   for (var k = 0; k < toZip.length; k++) {
     var item = toZip[k];
     try {
-      var resp = await fetch('http://localhost:3001/api/generate-document-content', {
+      var resp = await fetch('/api/generate-document-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

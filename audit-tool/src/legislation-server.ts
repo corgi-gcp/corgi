@@ -193,6 +193,138 @@ ${policyTypes ? `Pay particular attention to how each policy type (${policyTypes
   }
 });
 
+// ── Combined research + checklist (saves one Claude call) ─────────────────────
+app.post('/api/research-and-checklist', async (req, res) => {
+  const { state, caseType, policyTypes, apiKey: bodyApiKey, model: bodyModel } = req.body as {
+    state: string; caseType: string; policyTypes?: string; apiKey?: string; model?: string;
+  };
+
+  if (!state || !caseType) return res.status(400).json({ error: 'state and caseType are required' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = (data: object) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    const policyTypesLine = policyTypes ? `\nSpecific Policy Types: ${policyTypes}` : '';
+    send({ type: 'status', message: `Searching ${state} DOI and NAIC for "${caseType}" statutes...` });
+
+    const researchMessages: Anthropic.MessageParam[] = [{
+      role: 'user',
+      content: `You are a regulatory research assistant. Research captive insurance legislation for the following:
+
+State: ${state}
+Case Type / Business Context: ${caseType}${policyTypesLine}
+
+Please search for and return:
+1. Current captive insurance statutes from the ${state} Department of Insurance (DOI)
+2. Relevant NAIC model laws or guidelines that apply
+3. Key filing requirements and document checklist for this case type${policyTypes ? `\n4. Specific requirements for each policy type: ${policyTypes}` : ''}
+${policyTypes ? '5' : '4'}. Any recent amendments or regulatory changes
+
+${policyTypes ? `Pay particular attention to how each policy type (${policyTypes}) is treated under ${state} captive statutes.\n\n` : ''}Format your response as structured sections with clear headings. Be specific about statute numbers, rule citations, and document requirements.`
+    }];
+
+    const reqClient = _getClient(bodyApiKey);
+    const reqModel = _getModel(bodyModel);
+
+    // Phase 1: Research with web search
+    let response: Anthropic.Message;
+    try {
+      response = await (reqClient.messages.create as Function)({
+        model: reqModel, max_tokens: 4096,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: researchMessages,
+      });
+    } catch {
+      response = await reqClient.messages.create({
+        model: reqModel, max_tokens: 4096, messages: researchMessages,
+      });
+    }
+
+    // Handle tool use loop
+    let currentMessages = researchMessages;
+    let currentResponse = response;
+
+    while (currentResponse.stop_reason === 'tool_use') {
+      const toolUses = currentResponse.content.filter(b => b.type === 'tool_use') as Anthropic.ToolUseBlock[];
+      for (const tu of toolUses) {
+        send({ type: 'status', message: `Searching: ${(tu.input as { query?: string }).query ?? '...'}` });
+      }
+      const assistantMsg: Anthropic.MessageParam = { role: 'assistant', content: currentResponse.content };
+      const toolResults: Anthropic.ToolResultBlockParam[] = toolUses.map(tu => ({
+        type: 'tool_result' as const, tool_use_id: tu.id,
+        content: JSON.stringify((tu as unknown as { result?: unknown }).result ?? ''),
+      }));
+      currentMessages = [...currentMessages, assistantMsg, { role: 'user', content: toolResults }];
+      currentResponse = await (reqClient.messages.create as Function)({
+        model: reqModel, max_tokens: 4096,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: currentMessages,
+      });
+    }
+
+    // Extract research text
+    const textBlocks = currentResponse.content.filter(b => b.type === 'text') as Anthropic.TextBlock[];
+    const fullText = textBlocks.map(b => b.text).join('\n');
+
+    send({ type: 'research_result', text: fullText });
+    send({ type: 'status', message: 'Extracting document checklist from research...' });
+
+    // Phase 2: Extract checklist from the same conversation context
+    const checklistMessages: Anthropic.MessageParam[] = [
+      ...currentMessages,
+      { role: 'assistant', content: currentResponse.content },
+      { role: 'user', content: `Now extract ALL required filing documents from the legislation research above into a structured checklist.
+
+Return a JSON object with this exact structure (no markdown, no explanation — raw JSON only):
+{
+  "state": "${state}",
+  "caseType": "${caseType}",
+  "summary": "1-2 sentence overview of the regulatory framework",
+  "items": [
+    {
+      "id": 1,
+      "name": "Document name",
+      "description": "What this document contains and why it is required",
+      "status": "mandatory" | "conditional" | "optional",
+      "conditionNote": "Only populated if status is conditional — describe the condition",
+      "category": "Formation" | "Governance" | "Financial" | "Personnel" | "Coverage" | "Compliance" | "Other",
+      "citation": "Specific statute or rule citation if known, otherwise empty string"
+    }
+  ]
+}
+
+Be exhaustive — include every document mentioned. Use status "mandatory" for always-required, "conditional" for situation-dependent, "optional" for recommended-only.` },
+    ];
+
+    const checklistResponse = await reqClient.messages.create({
+      model: reqModel, max_tokens: 4096, messages: checklistMessages,
+    });
+
+    const checklistRaw = (checklistResponse.content[0] as Anthropic.TextBlock).text.trim();
+    let checklist: unknown;
+    try {
+      checklist = JSON.parse(extractJson(checklistRaw));
+    } catch {
+      send({ type: 'error', message: 'Failed to parse checklist JSON. Raw: ' + checklistRaw.slice(0, 200) });
+      res.end();
+      return;
+    }
+
+    send({ type: 'checklist_result', checklist });
+    send({ type: 'done' });
+    res.end();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    send({ type: 'error', message });
+    res.end();
+  }
+});
+
 app.post('/api/document-checklist', async (req, res) => {
   const { state, caseType, legislationText, apiKey: bodyApiKey, model: bodyModel } = req.body as {
     state: string;
@@ -271,6 +403,120 @@ Be exhaustive — include every document mentioned. Use status "mandatory" for a
   }
 });
 
+// ── Combined document ingestion (quality score + identification in one call) ──
+app.post('/api/ingest-document', async (req, res) => {
+  const {
+    content, source,
+    fileName, fileType, fileContent, isBase64,
+    checklist,
+    apiKey: bodyApiKey, model: bodyModel
+  } = req.body as {
+    content?: string; source?: string;
+    fileName?: string; fileType?: string; fileContent?: string; isBase64?: boolean;
+    checklist?: Array<{ id: string; name: string }>;
+    apiKey?: string; model?: string;
+  };
+
+  // Determine document text for the prompt
+  const isPdf = (fileType === 'application/pdf' || (fileName || '').toLowerCase().endsWith('.pdf'));
+  const hasFileContent = !!fileContent;
+  const hasTextContent = !!content;
+
+  if (!hasFileContent && !hasTextContent) {
+    return res.status(400).json({ error: 'content or fileContent is required' });
+  }
+
+  try {
+    const client = _getClient(bodyApiKey);
+    const model = _getModel(bodyModel);
+
+    const checklistContext = checklist && checklist.length
+      ? `\n\nCURRENT FILING CHECKLIST (match against these):\n${checklist.map((c: any, i: number) => `${i + 1}. ${c.name}`).join('\n')}`
+      : '';
+
+    const combinedPrompt = `You are a SERFF filing quality analyst AND document identification specialist for captive insurance.
+
+Analyze the provided document and return a SINGLE JSON object that includes BOTH a quality assessment AND document identification. Return ONLY valid JSON — no markdown, no explanation.
+
+${checklistContext}
+
+Return this exact JSON structure:
+{
+  "score": {
+    "gates": {
+      "parseable": { "pass": true, "value": "description of format" },
+      "approved": { "pass": true, "value": "status" },
+      "currency": { "pass": true, "value": "recency assessment" }
+    },
+    "scores": {
+      "completeness": { "weight": 30, "score": 70 },
+      "generalizability": { "weight": 25, "score": 60 },
+      "clarity": { "weight": 25, "score": 75 },
+      "precedent": { "weight": 20, "score": 50 }
+    },
+    "composite": 65,
+    "tier": "B",
+    "tierLabel": "Reference Model",
+    "tierNote": "1-2 sentence quality assessment"
+  },
+  "identification": {
+    "documentType": "identified document type",
+    "confidence": "high | medium | low",
+    "summary": "1-2 sentence description",
+    "coveredRequirements": ["requirement names this covers"],
+    "keyFields": ["key fields found"],
+    "gaps": ["missing fields"],
+    "filingReady": true
+  }
+}
+
+Tiers: A = 85+, B = 65-84, C = 45-64, D = <45. Score 0-100 per dimension. Composite = weighted sum.`;
+
+    let response: Anthropic.Message;
+
+    if (hasFileContent && isPdf && isBase64) {
+      // Native PDF support
+      response = await (client.beta as any).messages.create({
+        model, max_tokens: 2048,
+        system: 'You are a captive insurance filing specialist with expertise in SERFF documents and quality assessment.',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileContent } },
+            { type: 'text' as const, text: combinedPrompt },
+          ],
+        }],
+        betas: ['pdfs-2024-09-25'],
+      });
+    } else {
+      // Text content (either from fileContent or content param)
+      let textContent: string;
+      if (hasFileContent) {
+        textContent = isBase64
+          ? Buffer.from(fileContent!, 'base64').toString('utf8').slice(0, 15000)
+          : fileContent!.slice(0, 15000);
+      } else {
+        textContent = content!.slice(0, 8000);
+      }
+
+      response = await client.messages.create({
+        model, max_tokens: 2048,
+        messages: [{ role: 'user', content: `${combinedPrompt}\n\nSOURCE: ${source || fileName || 'uploaded'}\nDOCUMENT CONTENT:\n${textContent}` }],
+      });
+    }
+
+    const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
+    const jsonStr = extractJson(raw);
+    const parsed = JSON.parse(jsonStr) as { score: unknown; identification: unknown };
+
+    res.json(parsed);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
+// Legacy endpoint — redirects to ingest-document
 app.post('/api/serff-quality-score', async (req, res) => {
   const { content, source, apiKey: bodyApiKey, model: bodyModel } = req.body as { content: string; source: string; apiKey?: string; model?: string };
 
@@ -408,89 +654,8 @@ Return raw JSON only (no markdown):
   }
 });
 
-app.post('/api/generate-documents', async (req, res) => {
-  const { requirements, matches, serffContext, legislation, state, apiKey: bodyApiKey, model: bodyModel } = req.body as {
-    requirements: Array<{ id: number; name: string; description: string }>;
-    matches: Array<{ name: string; status: string; section: string }>;
-    serffContext: string;
-    legislation: string;
-    state: string;
-    apiKey?: string;
-    model?: string;
-  };
-
-  if (!requirements?.length) return res.status(400).json({ error: 'requirements array is required' });
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  const send = (data: object) => res.write(`data: ${JSON.stringify(data)}\n\n`);
-
-  try {
-    send({ type: 'status', message: `Agent analyzing ${requirements.length} requirements...` });
-
-    const hasSerff = serffContext && serffContext.trim().length > 0;
-    const prompt = `You are a filing document agent for ${state} captive insurance.
-
-REQUIREMENTS (${requirements.length}):
-${requirements.map(r => `${r.id}. ${r.name} — ${r.description}`).join('\n')}
-
-MATCH RESULTS FROM SERFF REFERENCE DOCS:
-${(matches || []).map(m => `• ${m.name}: ${m.status.toUpperCase()} (${m.section})`).join('\n')}
-
-${hasSerff ? `SERFF REFERENCE LIBRARY (AI-identified content):
-${serffContext.slice(0, 3000)}
-
-` : ''}LEGISLATION EXCERPT (${state}):
-${(legislation || '').slice(0, 2500)}
-
-INSTRUCTIONS:
-For each requirement decide the action based on MATCH RESULTS and SERFF LIBRARY:
-- "adopted"  → match=covered AND serff doc explicitly covers this requirement → copy structure/language directly
-- "adapted"  → match=partial OR serff doc covers it partially → take serff language, adapt for ${state}-specific rules
-- "generated"→ match=gap OR no serff reference → draft from scratch using legislation
-- "skipped"  → requirement clearly N/A for this entity type
-
-For "adopted" and "adapted" items, reference which SERFF document is the source in the note.
-
-Return raw JSON only (no markdown):
-{
-  "items": [
-    {
-      "name": "requirement name",
-      "action": "adopted|adapted|generated|skipped",
-      "note": "1-sentence: what was done and which SERFF doc was the source (if applicable)",
-      "output": "SEIC_DocumentName.docx or — if skipped"
-    }
-  ]
-}`;
-
-    send({ type: 'status', message: 'Running agent decisions...' });
-
-    const response = await _getClient(bodyApiKey).messages.create({
-      model: _getModel(bodyModel),
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-    const jsonStr = extractJson(raw);
-
-    let parsed: unknown;
-    try { parsed = JSON.parse(jsonStr); }
-    catch { send({ type: 'error', message: 'Parse error: ' + raw.slice(0, 200) }); res.end(); return; }
-
-    send({ type: 'result', docs: parsed });
-    send({ type: 'done' });
-    res.end();
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    send({ type: 'error', message });
-    res.end();
-  }
-});
+// /api/generate-documents — REMOVED (zombie Step 5)
+// Step 5 now builds the decision table client-side from Step 4 match data.
 
 // ── SERFF search terms ────────────────────────────────────────────────────────
 app.post('/api/serff-search-terms', async (req, res) => {
